@@ -1,0 +1,205 @@
+Component: mingw-w64-runtime
+Version: mingw-w64-x86-64-dev 8.0.0-1, gcc-mingw-w64-x86-64-win32 10.3.0-14ubuntu1+24.3
+Licenses: ZPL-2.1 AND LicenseRef-PublicDomain AND LicenseRef-Lucent-gdtoa AND BSD-3-Clause AND LicenseRef-Keith-Marshall AND LicenseRef-SunPro AND GCC-exception-3.1
+Origin: https://www.mingw-w64.org/ (Debian/Ubuntu packages above)
+
+The MinGW-w64 cross linker copies a few members of the MinGW-w64 C runtime and
+of libgcc into bin/opendana.exe and bin/SDL2.dll (static start-up code, printf/
+strtod helpers and math functions). Neither executable imports a MinGW runtime
+DLL (no libgcc_s, libwinpthread or libstdc++ DLL); the thread model is win32,
+so winpthreads is not linked. The members were identified with linker maps
+(-Wl,-Map) of both executables.
+
+Linked members (union of both executables; linker maps -Wl,-Map) and the
+notices that apply. Where the upstream licence of a member is not certain, every
+notice that could apply is reproduced:
+
+  libmingw32.a: charmax, cinitexe, crt0_c, CRT_fp10, crt_handler, dllargv,
+    gccmain, merr, mingw_helpers, natstart, _newmode, pesect, pseudo-reloc,
+    pseudo-reloc-list, tlsmcrt, tlsmthread, tlssup, tlsthrd, usermatherr,
+    wildcard, xncommod, xtxtmode; crt2.o / dllcrt2.o  -> sections 1 and 2
+  libmingwex.a: gdtoa, dmisc, gethex, gmisc, hd_init, hexnan, misc, smisc,
+    strtodg, strtopx, sum                               -> section 3 (Lucent)
+  libmingwex.a: strtodnrp                              -> section 4 (David M. Gay)
+  libmingwex.a: strtok_r                               -> section 5 (BSD-3-Clause)
+  libmingwex.a: mingw_pformat                          -> sections 3 and 6
+  libmingwex.a: mingw_vfprintf, mingw_vfscanf, mingw_vsnprintf,
+    mingw_vsprintf                                     -> sections 1 and 6
+  libmingwex.a: math members (acosf, asinf, atan, atan2, atan2f, atanf, cos,
+    cosf, cosl_internal, exp, exp2l, fmod, fmodf, internal_logl, ldexp, log,
+    log10f, log2l, logf, lround, lroundf, mingw_matherr, pow, powi, round,
+    roundf, scalbn, scalbnf, sin, sinf, sinl_internal, sqrt, sqrtf, tanf)
+                                                       -> sections 1 and 7
+  libmingwex.a: other helpers (dirent, _stat, dllentry, dllmain, fseeko64,
+    ftello64, isblank, strnlen, strtof, strtoimax, strtoumax, wcsnlen)
+                                                       -> section 1
+  libgcc.a: _chkstk_ms, _ctors, _divdi3, _udivdi3; libgcc_eh.a: emutls
+                                                       -> section 8
+
+==============================================================================
+1. mingw-w64 runtime - Zope Public License 2.1
+==============================================================================
+Copyright (c) 2009-2016 the mingw-w64 project
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+   1. Redistributions in source code must retain the accompanying
+      copyright notice, this list of conditions, and the following
+      disclaimer.
+   2. Redistributions in binary form must reproduce the accompanying
+      copyright notice, this list of conditions, and the following
+      disclaimer in the documentation and/or other materials provided
+      with the distribution.
+   3. Names of the copyright holders must not be used to endorse or
+      promote products derived from this software without prior
+      written permission from the copyright holders.
+   4. The right to distribute this software or to use it for any
+      purpose does not give you the right to use Servicemarks (sm) or
+      Trademarks (tm) of the copyright holders.  Use of them is
+      covered by separate agreement with the copyright holders.
+   5. If any files are modified, you must cause the modified files to
+      carry prominent notices stating that you changed the files and
+      the date of any change.
+
+Disclaimer
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+==============================================================================
+2. mingw-w64-crt/crt (start-up code) - public domain
+==============================================================================
+This file has no copyright assigned and is placed in the Public Domain.
+
+==============================================================================
+3. gdtoa and mingw_pformat - Lucent Technologies
+==============================================================================
+Copyright (C) 1997-2001 Lucent Technologies
+All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and
+its documentation for any purpose and without fee is hereby
+granted, provided that the above copyright notice appear in all
+copies and that both that the copyright notice and this
+permission notice and warranty disclaimer appear in supporting
+documentation, and that the name of Lucent or any of its entities
+not be used in advertising or publicity pertaining to
+distribution of the software without specific, written prior
+permission.
+
+LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
+SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
+THIS SOFTWARE.
+
+==============================================================================
+4. gdtoa/strtodnrp - David M. Gay
+==============================================================================
+Copyright (C) 2004, 2005 by David M. Gay
+Copyright (C) 1998, 2000 Lucent Technologies
+All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and
+that both that the copyright notice and this permission notice and
+warranty disclaimer appear in supporting documentation, and that the
+name of the author or any of his current or former employers not be
+used in advertising or publicity pertaining to distribution of the
+software without specific, written prior permission.
+
+THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.  IN
+NO EVENT SHALL THE AUTHOR OR ANY OF HIS CURRENT OR FORMER EMPLOYERS
+BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY
+DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
+OF THIS SOFTWARE.
+
+==============================================================================
+5. stdio/strtok_r - BSD-3-Clause
+==============================================================================
+Copyright (c) 1988, 1993 The Regents of the University of California.
+Copyright (c) 1998 Softweyr LLC.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in
+   the documentation and/or other materials provided with the
+   distribution.
+4. Neither the name of the University nor the names of its
+   contributors may be used to endorse or promote products derived
+   from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS''
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+==============================================================================
+6. mingw_pformat and the mingw printf family - Keith Marshall
+==============================================================================
+Written by Keith Marshall.
+
+This is free software.  You may redistribute and/or modify it as you
+see fit, without restriction of copyright.
+
+This software is provided "as is", in the hope that it may be useful,
+but WITHOUT WARRANTY OF ANY KIND, not even any implied warranty of
+MERCHANTABILITY, nor of FITNESS FOR ANY PARTICULAR PURPOSE.  At no
+time will the author accept any form of liability for any damages,
+however caused, resulting from the use of this software.
+
+==============================================================================
+7. Sun-derived mathematics - Sun Microsystems permissive notice
+==============================================================================
+Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+
+Developed at SunPro, a Sun Microsystems, Inc. business.
+Permission to use, copy, modify, and distribute this
+software is freely granted, provided that this notice
+is preserved.
+
+==============================================================================
+8. libgcc and libgcc_eh - GPL-3.0-or-later WITH GCC-exception-3.1
+==============================================================================
+libgcc and libgcc_eh are distributed under the GNU General Public License version 3 or later
+with the GCC Runtime Library Exception 3.1, which permits propagating the
+resulting executables under terms of the builder's choice and imposes no
+notice obligation on them. It is listed here for completeness only.
+
+==============================================================================
+Source
+==============================================================================
+None of the licenses above requires the corresponding source of these
+runtime members to accompany the binaries. The exact runtime is the one of the
+Debian/Ubuntu packages named in the header (their source packages are
+mingw-w64 8.0.0-1 and gcc-mingw-w64 24.3).

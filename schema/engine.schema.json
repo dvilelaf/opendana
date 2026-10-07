@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/engine.schema.json",
+  "title": "OpenDana engine tables",
+  "description": "One of content/base/engine/{enemy-tables,hero-programs,boss-tables}.json. These are the engine data sets the game reads at run time: the flame animation tables, Hero's two action-program sets (`programs_clear`, `programs_covered`) and the Boss combat scripts/metasprites. Each document is a lossless view of the bytes; the importer emits it and the unit tests check the canonical byte image.",
+  "oneOf": [
+    {
+      "title": "enemy-tables.json",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "horizontal_animations", "vertical_animations", "resistant_animations", "flame_animation"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "horizontal_animations": {
+          "type": "array", "minItems": 34, "maxItems": 34,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "vertical_animations": {
+          "type": "array", "minItems": 68, "maxItems": 68,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "resistant_animations": {
+          "type": "array", "minItems": 68, "maxItems": 68,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "flame_animation": {
+          "type": "array", "minItems": 48, "maxItems": 48,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["count", "wait", "pose"],
+            "properties": {
+              "count": { "type": "integer", "minimum": 0, "maximum": 255 },
+              "wait": { "type": "integer", "minimum": 0, "maximum": 255 },
+              "pose": {
+                "type": "array", "minItems": 4, "maxItems": 4,
+                "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "title": "hero-programs.json",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "programs_clear", "programs_covered"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "programs_clear": {
+          "type": "array", "minItems": 2508, "maxItems": 2508,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "programs_covered": {
+          "type": "array", "minItems": 2508, "maxItems": 2508,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        }
+      }
+    },
+    {
+      "title": "boss-tables.json",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "attack_data", "attack_offset", "corridor_right", "corridor_left", "pose_data", "retire_spans"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "attack_data": {
+          "type": "array", "minItems": 199, "maxItems": 199,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "attack_offset": {
+          "type": "array", "minItems": 32, "maxItems": 32,
+          "items": { "type": "integer", "minimum": 0, "maximum": 65535 }
+        },
+        "corridor_right": {
+          "type": "array", "minItems": 32, "maxItems": 32,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "corridor_left": {
+          "type": "array", "minItems": 32, "maxItems": 32,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "pose_data": {
+          "type": "array", "minItems": 593, "maxItems": 593,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        },
+        "retire_spans": {
+          "type": "array", "minItems": 10, "maxItems": 10,
+          "items": { "type": "integer", "minimum": 0, "maximum": 255 }
+        }
+      }
+    }
+  ]
+}

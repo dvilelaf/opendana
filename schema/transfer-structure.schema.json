@@ -1,0 +1,39 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://opendana.local/schema/transfer-structure.schema.json",
+ "title": "Decoded semantic EU background transfer structure, never a timing schedule",
+ "type": "object", "additionalProperties": false,
+ "required": ["schema_version", "id", "destinations", "atlases", "images"],
+ "properties": {
+  "schema_version": {"const": 1}, "id": {"const": "transfer-structure"},
+  "destinations": {"type": "array", "minItems": 12, "maxItems": 12, "items": {"type": "integer", "anyOf": [{"const": 0}, {"minimum": 8192, "maximum": 12287}]}},
+  "atlases": {"type": "array", "minItems": 2, "maxItems": 2, "items": false,
+   "prefixItems": [
+    {"$ref": "#/$defs/atlas", "properties": {"tiles": {"minItems": 239, "maxItems": 239}, "attributes": {"minItems": 239, "maxItems": 239}}},
+    {"$ref": "#/$defs/atlas", "properties": {"tiles": {"minItems": 132, "maxItems": 132}, "attributes": {"minItems": 132, "maxItems": 132}}}
+   ]},
+  "images": {"type": "array", "minItems": 31, "maxItems": 31, "items": {
+   "type": "object", "additionalProperties": false,
+   "required": ["atlas_id", "columns", "rows", "header_storage_low", "metatiles"],
+   "properties": {
+    "atlas_id": {"type": "integer", "minimum": 0, "maximum": 1},
+    "columns": {"type": "integer", "minimum": 1, "maximum": 8},
+    "rows": {"type": "integer", "minimum": 1, "maximum": 8},
+    "header_storage_low": {"$ref": "#/$defs/byte"},
+    "metatiles": {"type": "array", "minItems": 1, "maxItems": 64, "items": {"type": "integer", "minimum": 0, "maximum": 238}}
+   }, "description": "Parser additionally requires count=columns*rows and each ID in the selected atlas. Index in array is the image selector."
+  }}
+ },
+ "$defs": {
+  "byte": {"type": "integer", "minimum": 0, "maximum": 255},
+  "atlas": {
+   "type": "object", "additionalProperties": false,
+   "required": ["tile_storage_low", "attribute_storage_low", "tiles", "attributes"],
+   "properties": {
+    "tile_storage_low": {"$ref": "#/$defs/byte"}, "attribute_storage_low": {"$ref": "#/$defs/byte"},
+    "tiles": {"type": "array", "items": {"type": "array", "minItems": 16, "maxItems": 16, "items": {"$ref": "#/$defs/byte"}}},
+    "attributes": {"type": "array", "items": {"$ref": "#/$defs/byte"}}
+   }, "description": "Only the atlas tables and storage phase mod256, no encoded streams or per-image costs."
+  }
+ }
+}

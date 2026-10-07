@@ -1,0 +1,56 @@
+Component: type2-runtime
+Version: 8f39b89e2ac31e1640b3d3f7e9a5108e6ce805fa
+License: MIT
+Origin: https://github.com/AppImage/type2-runtime
+
+The AppImage Type-2 runtime: the small static executable at the start of the
+AppImage file that mounts the embedded SquashFS image (or extracts it) and runs
+AppRun. It is built by this project from the source at the revision above with
+packaging/appimage-runtime/build.sh (statically linked, reproducible). The
+runtime statically links the components listed in the notices of libfuse,
+squashfuse, musl, zstd, zlib and mimalloc. Copyright (c) 2004-23 probonopd and
+the AppImage contributors.
+
+The runtime also contains the C start-up objects and support routines of GCC
+14.2.0 (Alpine 14.2.0-r4: crtbeginS.o, crtendS.o, libgcc), which are covered by
+the GCC Runtime Library Exception, version 3.1: it allows the combined binary to
+be distributed under the terms of its other components. They are not modified.
+
+--- license text (type2.LICENSE) ---
+MIT License
+
+Copyright (c) 2004-23 probonopd
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+The AppImage runtime executable contains statically linked code from
+the following third party libraries, which are licensed under
+the following terms:
+
+* musl libc, licensed under the terms of
+  https://git.musl-libc.org/cgit/musl/tree/COPYRIGHT
+* libfuse, licensed under the terms of
+  https://github.com/libfuse/libfuse/blob/master/LGPL2.txt
+* squashfuse, licensed under the terms of
+  https://github.com/vasi/squashfuse/blob/master/LICENSE
+* libzstd, licensed under the terms of
+  https://github.com/facebook/zstd/blob/dev/LICENSE
+* zlib, licensed under the terms of
+  https://zlib.net/zlib_license.html
+

@@ -1,0 +1,69 @@
+RELINK instructions - OpenDana, Linux AppImage
+=======================================================
+
+An AppImage is two things glued together: the Type-2 runtime (a static
+executable) followed by a SquashFS image that holds the game. The runtime
+statically links libfuse 3.15.0, which is licensed under the GNU Lesser General
+Public License, version 2.1. You are entitled to modify libfuse (or use another
+version) and to obtain a runtime relinked with your version. This file explains
+how. Everything it needs is published or shipped with the AppImage.
+
+Components
+----------
+- application        GPL-3.0-or-later      usr/bin/opendana
+- SDL2 2.32.10       Zlib                  usr/lib/libSDL2-2.0.so.0 (shared)
+- SDL2-embedded      SunPro/BSD/MIT/Zlib/Apache-2.0 (compiled into SDL2)
+- cJSON, stb_image, stb_image_write, stb_truetype (MIT), Inter fonts (OFL-1.1)
+- type2-runtime      MIT                   the start of the AppImage file
+- libfuse 3.15.0     LGPL-2.1-only         statically linked into the runtime
+- squashfuse 0.5.2   BSD-2-Clause          statically linked into the runtime
+- zstd 1.5.6, zlib 1.3.2, mimalloc 2.1.7, musl 1.2.5   statically linked
+
+The exact versions, source archives and their SHA-256 are in SOURCES.json.
+
+Rebuilding the application and replacing SDL2
+---------------------------------------------
+Both work as for the TAR package: sources/application.tar.xz is the git archive
+of the commit printed by `opendana --version`; usr/lib/libSDL2-2.0.so.0 can be
+replaced by an ABI-compatible build (see sources/relink-materials.tar.xz: the SDL
+recipe, generated SDL_config.h and per-file flags). To replace a file of an
+existing AppImage:
+
+    ./opendana-<version>-x86_64.AppImage --appimage-extract
+    cp <your-libSDL2-2.0.so.0> squashfs-root/usr/lib/libSDL2-2.0.so.0
+    # cut the runtime off the original file (its size is the offset printed by)
+    ./opendana-<version>-x86_64.AppImage --appimage-offset
+    head -c <offset> opendana-<version>-x86_64.AppImage > runtime
+    mksquashfs squashfs-root image.squashfs -noappend -all-root -no-xattrs -comp gzip
+    cat runtime image.squashfs > my.AppImage && chmod +x my.AppImage
+
+Rebuilding the runtime with a modified libfuse (LGPL-2.1)
+---------------------------------------------------------
+The file opendana-<version>-appimage-runtime-source.tar.xz, published next to the
+AppImage, contains the build scripts, the toolchain and source lock files and the
+exact upstream source tarball of every component (libfuse included). The same
+scripts are in sources/relink-materials.tar.xz (directory appimage-runtime/) and
+the same upstream tarballs are in this bundle's sources/ directory.
+
+    tar -xJf opendana-<version>-appimage-runtime-source.tar.xz
+    cd opendana-<version>-appimage-runtime-source
+    # 1. put your modified libfuse as sources/fuse-3.15.0.tar.xz (a tarball whose
+    #    top-level directory holds the libfuse tree), and update its SHA-256 in
+    #    sources.lock (field 3 of the libfuse line)
+    # 2. build (needs Docker; the container has no network access)
+    bash build.sh --sources ./sources --out ./out
+
+build.sh builds every library from source inside a pinned Alpine 3.21.8 container
+(image digest and exact compiler packages in toolchain.lock), then links the
+runtime statically. The result is out/runtime-x86_64. With the unmodified sources
+it is bit-for-bit the runtime of this AppImage:
+
+    SHA-256 of the shipped runtime: see BUILD-IDENTITY.json, artifacts.type2-runtime
+
+(the first N bytes of the AppImage, where N is the size of that file).
+To build an AppImage with your runtime, use it in place of the shipped one as in
+the application section above (cat your-runtime image.squashfs).
+
+Modification and reverse engineering of the shipped components for debugging
+is permitted by the applicable licenses; no additional restriction is added
+by this bundle.

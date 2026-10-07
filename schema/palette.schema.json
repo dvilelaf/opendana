@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/palette.schema.json",
+  "title": "OpenDana master palettes (palettes/*.json)",
+  "description": "The RGB tables that map the PPU's 6-bit colour indices to 0x00RRGGBB values. The package carries the NTSC 2C02, the EU PAL 2C07 and the reference fixture profile; the game plays PAL. This is a lossless view of the extracted master-palette headers (MJ2).",
+  "type": "object",
+  "required": ["schema_version", "id", "master"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "master": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "colors"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "name": { "type": "string" },
+          "colors": {
+            "type": "array",
+            "description": "64 entries, 0x00RRGGBB.",
+            "minItems": 64,
+            "maxItems": 64,
+            "items": { "type": "integer", "minimum": 0, "maximum": 16777215 }
+          }
+        }
+      }
+    }
+  }
+}

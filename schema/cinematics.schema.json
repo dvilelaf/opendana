@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/cinematics.schema.json",
+  "title": "ROM-derived native cinematic scene programs",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "source", "scenes", "poses", "animations", "bands", "cycles", "velocities", "bg_bank_sets", "band_addresses", "colours"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"enum": ["castle-appears", "bootstrap", "editor-entry", "castle-round10", "world-clear", "goodnight-hidden", "boss-ending"]},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rom_sha256"],
+      "properties": {
+        "rom_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "engine": {"type": "string"}, "scripts": {"type": "string"}
+      }
+    },
+    "scenes": {
+      "type": "array", "minItems": 1, "maxItems": 44,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["index", "program"],
+        "properties": {
+          "index": {"type": "integer", "minimum": 0, "maximum": 43},
+          "text": {"type": "array", "maxItems": 20000, "items": {"$ref": "#/$defs/text_instruction"}},
+          "program": {"type": "array", "minItems": 1, "maxItems": 20000, "items": {"$ref": "#/$defs/instruction"}}
+        }
+      }
+    },
+    "poses": {"type": "array", "minItems": 208, "maxItems": 208, "items": {"$ref": "#/$defs/rows"}},
+    "animations": {"type": "array", "minItems": 17, "maxItems": 46, "items": {"$ref": "#/$defs/rows"}},
+    "bands": {"type": "array", "minItems": 14, "maxItems": 14, "items": {"$ref": "#/$defs/bytes"}},
+    "cycles": {
+      "type": "array", "minItems": 20, "maxItems": 20,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["values", "indices"],
+        "properties": {
+          "values": {"$ref": "#/$defs/bytes", "minItems": 64, "maxItems": 64},
+          "indices": {"$ref": "#/$defs/bytes", "minItems": 8, "maxItems": 8}
+        }
+      }
+    },
+    "velocities": {"type": "array", "minItems": 27, "maxItems": 27, "items": {"$ref": "#/$defs/bytes", "minItems": 4, "maxItems": 4}},
+    "bg_bank_sets": {"type": "array", "minItems": 256, "maxItems": 256, "items": {"$ref": "#/$defs/bytes", "minItems": 4, "maxItems": 4}},
+    "band_addresses": {"type": "array", "minItems": 12, "maxItems": 12, "items": {"type": "integer", "minimum": 0, "maximum": 65535}},
+    "colours": {"type": "array", "minItems": 256, "maxItems": 256, "items": {"$ref": "#/$defs/bytes", "minItems": 3, "maxItems": 3}},
+    "text_addresses": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "integer", "minimum": 8192, "maximum": 16383}},
+    "palette_cycles": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/bytes", "minItems": 4, "maxItems": 4}},
+    "shake_patterns": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/bytes", "minItems": 16, "maxItems": 16}},
+    "image_cycles": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/bytes", "minItems": 64, "maxItems": 64}},
+    "title_palette": {"$ref": "#/$defs/bytes", "minItems": 32, "maxItems": 32},
+    "title_colours": {"$ref": "#/$defs/bytes", "minItems": 7, "maxItems": 7},
+    "title_loop_ticks": {"type": "integer", "minimum": 1, "maximum": 65535}
+  },
+  "allOf": [
+    {"if": {"properties": {"id": {"const": "goodnight-hidden"}}}, "then": {"properties": {"animations": {"minItems": 17, "maxItems": 17}}}},
+    {"if": {"properties": {"id": {"enum": ["world-clear", "boss-ending"]}}}, "then": {"properties": {"animations": {"minItems": 46, "maxItems": 46}}}},
+    {"if": {"properties": {"id": {"const": "castle-round10"}}}, "then": {"properties": {"animations": {"minItems": 44, "maxItems": 44}}}},
+    {"if": {"properties": {"id": {"enum": ["bootstrap", "castle-appears", "editor-entry"]}}}, "then": {"properties": {"animations": {"minItems": 32, "maxItems": 32}}}},
+    {"if": {"properties": {"id": {"const": "castle-appears"}}}, "then": {"properties": {"scenes": {"minItems": 10, "maxItems": 10, "items": {"properties": {"index": {"minimum": 32, "maximum": 41}}}}}}},
+    {"if": {"properties": {"id": {"const": "bootstrap"}}}, "then": {"required": ["text_addresses", "palette_cycles", "title_palette", "title_colours", "title_loop_ticks"], "properties": {"scenes": {"minItems": 3, "maxItems": 3, "items": {"required": ["text"], "properties": {"index": {"enum": [0, 1, 30]}}}}}}},
+    {"if": {"properties": {"id": {"const": "editor-entry"}}}, "then": {"required": ["text_addresses"], "properties": {"scenes": {"minItems": 1, "maxItems": 1, "items": {"required": ["text"], "properties": {"index": {"const": 29}}}}}}},
+    {"if": {"properties": {"id": {"const": "castle-round10"}}}, "then": {"required": ["text_addresses", "palette_cycles", "shake_patterns", "image_cycles"], "properties": {"scenes": {"minItems": 9, "maxItems": 9, "allOf": [{"items": {"required": ["text"]}}], "prefixItems": [
+      {"properties": {"index": {"const": 8}}}, {"properties": {"index": {"const": 10}}}, {"properties": {"index": {"const": 12}}},
+      {"properties": {"index": {"const": 14}}}, {"properties": {"index": {"const": 16}}}, {"properties": {"index": {"const": 18}}},
+      {"properties": {"index": {"const": 20}}}, {"properties": {"index": {"const": 22}}}, {"properties": {"index": {"const": 24}}}
+    ]}}}},
+    {"if": {"properties": {"id": {"const": "world-clear"}}}, "then": {"required": ["text_addresses", "palette_cycles", "shake_patterns", "image_cycles"], "properties": {"scenes": {"minItems": 10, "maxItems": 10, "allOf": [{"items": {"required": ["text"]}}], "prefixItems": [
+      {"properties": {"index": {"const": 9}}}, {"properties": {"index": {"const": 11}}}, {"properties": {"index": {"const": 13}}},
+      {"properties": {"index": {"const": 15}}}, {"properties": {"index": {"const": 17}}}, {"properties": {"index": {"const": 19}}},
+      {"properties": {"index": {"const": 21}}}, {"properties": {"index": {"const": 23}}}, {"properties": {"index": {"const": 25}}},
+      {"properties": {"index": {"const": 42}}}
+    ]}}}},
+    {"if": {"properties": {"id": {"const": "goodnight-hidden"}}}, "then": {"required": ["text_addresses"], "properties": {
+      "image_cycles": false, "shake_patterns": false, "palette_cycles": false,
+      "title_palette": false, "title_colours": false, "title_loop_ticks": false,
+      "scenes": {"minItems": 2, "maxItems": 2, "allOf": [{"items": {"required": ["text"]}}], "prefixItems": [
+        {"properties": {"index": {"const": 31}}}, {"properties": {"index": {"const": 5}}}
+      ]}
+    }}},
+    {"if": {"properties": {"id": {"const": "boss-ending"}}}, "then": {"required": ["text_addresses", "palette_cycles", "shake_patterns"], "properties": {
+      "image_cycles": false, "title_palette": false, "title_colours": false, "title_loop_ticks": false,
+      "scenes": {"minItems": 2, "maxItems": 2, "allOf": [{"items": {"required": ["text"]}}], "prefixItems": [
+        {"properties": {"index": {"const": 26}}}, {"properties": {"index": {"const": 27}}}
+      ]}
+    }}}
+  ],
+  "$defs": {
+    "text_instruction": {"type": "object", "additionalProperties": false, "required": ["op", "args"], "properties": {"op": {"enum": ["glyph", "speed", "pause-short", "line", "pause", "upload", "erase", "font-next", "font-reset", "stop"]}, "args": {"$ref": "#/$defs/bytes"}}},
+    "bytes": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+    "rows": {"type": "array", "items": {"$ref": "#/$defs/bytes"}},
+    "instruction": {
+      "type": "object", "additionalProperties": false,
+      "required": ["op", "args", "bank", "addr"],
+      "properties": {
+        "op": {"enum": ["step", "finish", "end-step", "call", "return", "background", "objects", "object", "palettes", "chr", "vram", "bands", "flush", "scroll", "image-cycle", "fade", "sound", "skip-toggle", "text", "scene", "delay", "clear", "palette-cycle", "velocity", "sprite-split", "sprite-banks", "image", "shake", "shake-stop", "backdrop"]},
+        "args": {"$ref": "#/$defs/bytes"},
+        "bank": {"enum": [9, 13]},
+        "addr": {"type": "integer", "minimum": 32768, "maximum": 49151},
+        "blocks": {"$ref": "#/$defs/rows"}, "objects": {"$ref": "#/$defs/rows"},
+        "layout": {"$ref": "#/$defs/bytes", "minItems": 2048, "maxItems": 2048},
+        "banks": {"$ref": "#/$defs/bytes", "minItems": 0, "maxItems": 4},
+        "writes": {
+          "type": "array", "items": {
+            "type": "array", "minItems": 3, "maxItems": 3,
+            "prefixItems": [{"type": "integer", "minimum": 0, "maximum": 65535}, {"enum": [1, 32]}, {"$ref": "#/$defs/bytes"}]
+          }
+        }
+      },
+      "allOf": [
+        {"if": {"properties": {"op": {"const": "background"}}}, "then": {"required": ["blocks", "layout", "banks"]}},
+        {"if": {"properties": {"op": {"const": "objects"}}}, "then": {"required": ["objects", "banks"]}},
+        {"if": {"properties": {"op": {"const": "vram"}}}, "then": {"required": ["writes"]}}
+      ]
+    }
+  }
+}

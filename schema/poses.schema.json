@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/poses.schema.json",
+  "title": "OpenDana metasprites and animation (graphics/sprites/*.json)",
+  "description": "The sprite bundles of the package: the Hero metasprites, the steam poses and the animated background CHR bank tables. It is a lossless view of the extracted pose and effect tables (MJ2). A part is (dx, dy, tile, palette); a pose is (bank, address, part_count, part_index, ?) as extracted. The exact meaning of each column is fixed by the extractor and the compose.c consumer.",
+  "type": "object",
+  "required": ["schema_version", "id", "world_sprite_banks", "pose_parts", "poses"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "world_sprite_banks": {
+      "type": "array",
+      "description": "Sprite CHR bank per world (indices 0..9 for worlds 1..10).",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": { "type": "integer" }
+    },
+    "pose_parts": {
+      "type": "array",
+      "description": "Flat part table; each part is (dx, dy, tile, palette).",
+      "items": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": { "type": "integer" }
+      }
+    },
+    "poses": {
+      "type": "array",
+      "description": "Pose -> (bank, address, part_count, first_part, ?).",
+      "items": {
+        "type": "array",
+        "minItems": 5,
+        "maxItems": 5,
+        "items": { "type": "integer" }
+      }
+    },
+    "steam_parts": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 4,
+        "maxItems": 4,
+        "items": { "type": "integer" }
+      }
+    },
+    "steam_phases": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "minItems": 3,
+        "maxItems": 3,
+        "items": { "type": "integer" }
+      }
+    },
+    "bg_banks": {
+      "type": "array",
+      "description": "Animated background CHR bank sequence per slot.",
+      "items": {
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": { "type": "integer" }
+      }
+    },
+    "bg_waits": {
+      "type": "array",
+      "description": "Hold time of each entry of bg_banks.",
+      "items": {
+        "type": "array",
+        "minItems": 6,
+        "maxItems": 6,
+        "items": { "type": "integer" }
+      }
+    }
+  }
+}

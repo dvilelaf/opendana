@@ -1,0 +1,17 @@
+{
+  "schema_version": 2,
+  "id": "ejemplo",
+  "name": "Example mod: our own ROUND 1-1 and a striped hero",
+  "version": "2.0.0",
+  "levels": [
+    "levels/1-1.json"
+  ],
+  "graphics": {
+    "chr_patches": [
+      {
+        "png": "graphics/patches/player.png",
+        "tile": 1024
+      }
+    ]
+  }
+}

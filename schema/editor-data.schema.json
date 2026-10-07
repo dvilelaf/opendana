@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.example/schema/editor-data.schema.json",
+  "title": "EU ice connection and editor tables",
+  "type": "object",
+  "required": ["schema_version", "ice_connections", "palette", "cell_tile", "toolbar_x", "grid_y", "grid_x", "pal_y", "pal_x", "marker_addr"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "ice_connections": {"type": "array", "minItems": 64, "maxItems": 64, "items": {"type": "integer", "minimum": 0, "maximum": 15}},
+    "palette": {"type": "array", "minItems": 36, "maxItems": 36, "items": {"anyOf": [{"type": "integer", "minimum": 0, "maximum": 16}, {"enum": [128, 255]}]}, "description": "Row-major 3x12. Runtime requires a BACK slot or >=3 distinct tools in every row, to guarantee bounded scanning with A/B bound."},
+    "cell_tile": {"$ref": "#/$defs/bytes", "minItems": 16, "maxItems": 16},
+    "toolbar_x": {"$ref": "#/$defs/bytes", "minItems": 3, "maxItems": 3},
+    "grid_y": {"$ref": "#/$defs/bytes", "minItems": 14, "maxItems": 14},
+    "grid_x": {"$ref": "#/$defs/bytes", "minItems": 15, "maxItems": 15},
+    "pal_y": {"$ref": "#/$defs/bytes", "minItems": 36, "maxItems": 36},
+    "pal_x": {"$ref": "#/$defs/bytes", "minItems": 36, "maxItems": 36},
+    "marker_addr": {"$ref": "#/$defs/bytes", "minItems": 34, "maxItems": 34, "description": "17 little-endian PPU addresses. Runtime requires every high byte in 0x20..0x23."}
+  },
+  "$defs": {
+    "bytes": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}}
+  }
+}

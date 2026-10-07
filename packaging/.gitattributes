@@ -1,0 +1,3 @@
+# C6.30: `git archive` writes the archived commit into this file, so a source
+# archive (and every binary built from it) knows exactly which commit it is.
+source-commit.txt export-subst

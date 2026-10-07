@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/scene-extras.schema.json",
+  "title": "Static ROM-derived scene artwork, no captured agendas",
+  "oneOf": [{"$ref": "#/$defs/layouts"}, {"$ref": "#/$defs/magicword"}],
+  "$defs": {
+    "bytes": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}},
+    "palette": {"$ref": "#/$defs/bytes", "minItems": 32, "maxItems": 32, "items": {"maximum": 63}},
+    "record": {"type": "array", "minItems": 3, "maxItems": 3, "prefixItems": [
+      {"type": "integer", "oneOf": [{"minimum": 1, "maximum": 59}, {"minimum": 129, "maximum": 187}]},
+      {"type": "integer", "minimum": 8192, "maximum": 12287},
+      {"$ref": "#/$defs/bytes", "minItems": 1, "maxItems": 59}
+    ]},
+    "records": {"type": "object", "additionalProperties": false, "required": ["op", "records"], "properties": {
+      "op": {"const": "records"}, "records": {"type": "array", "maxItems": 4096, "items": {"$ref": "#/$defs/record"}}
+    }},
+    "yield": {"type": "object", "additionalProperties": false, "required": ["op"], "properties": {"op": {"const": "yield"}}},
+    "word_command": {"type": "object", "additionalProperties": false, "required": ["op"], "properties": {"op": {"const": "word"}}},
+    "layouts": {"type": "object", "additionalProperties": false, "required": ["schema_version", "id", "map_bases"], "properties": {
+      "schema_version": {"const": 2}, "id": {"const": "layouts"},
+      "map_bases": {"type": "array", "minItems": 2, "maxItems": 2,
+        "allOf": [{"items": {"$ref": "#/$defs/map_base"}}],
+        "prefixItems": [{"properties": {"scene_index": {"const": 2}}}, {"properties": {"scene_index": {"const": 43}}}]
+      }
+    }},
+    "map_base": {"type": "object", "additionalProperties": false, "required": ["scene_index", "chr_mode", "background_banks", "ciram"], "properties": {
+      "scene_index": {"type": "integer"}, "chr_mode": {"const": 0},
+      "background_banks": {"$ref": "#/$defs/bytes", "minItems": 4, "maxItems": 4},
+      "ciram": {"$ref": "#/$defs/bytes", "minItems": 2048, "maxItems": 2048}
+    }},
+    "magicword": {"type": "object", "additionalProperties": false,
+      "required": ["schema_version", "id", "palette_buffer", "chr", "song_request", "screen", "question", "word", "cursor", "cycle", "queue_capacity_bytes", "post_goodnight"],
+      "properties": {
+        "schema_version": {"const": 2}, "id": {"const": "magicword"},
+        "palette_buffer": {"$ref": "#/$defs/palette"}, "chr": {"$ref": "#/$defs/bytes", "minItems": 6, "maxItems": 6},
+        "song_request": {"type": "integer", "minimum": 0, "maximum": 255}, "queue_capacity_bytes": {"const": 60},
+        "screen": {"type": "array", "minItems": 5, "maxItems": 5, "prefixItems": [
+          {"$ref": "#/$defs/records"}, {"$ref": "#/$defs/yield"}, {"$ref": "#/$defs/records"}, {"$ref": "#/$defs/yield"}, {"$ref": "#/$defs/word_command"}
+        ]},
+        "question": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/$defs/records"}},
+        "word": {"type": "object", "additionalProperties": false, "required": ["address", "count", "group", "gap_tile", "glyphs"], "properties": {
+          "address": {"type": "integer", "minimum": 8192, "maximum": 12287}, "count": {"const": 26}, "group": {"const": 8},
+          "gap_tile": {"type": "integer", "minimum": 0, "maximum": 255}, "glyphs": {"$ref": "#/$defs/bytes", "minItems": 32, "maxItems": 32}
+        }},
+        "cursor": {"type": "object", "additionalProperties": false, "required": ["y", "tile", "attr", "x"], "properties": {
+          "y": {"type": "integer", "minimum": 0, "maximum": 255}, "tile": {"type": "integer", "minimum": 0, "maximum": 255},
+          "attr": {"type": "integer", "minimum": 0, "maximum": 255}, "x": {"$ref": "#/$defs/bytes", "minItems": 2, "maxItems": 2}
+        }},
+        "cycle": {"type": "object", "additionalProperties": false, "required": ["bg_mask", "bg_entries", "bg_tables", "sprite_mask", "sprite_entry", "sprite_table"], "properties": {
+          "bg_mask": {"const": 15}, "bg_entries": {"const": [5, 6, 7]},
+          "bg_tables": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/bytes", "minItems": 3, "maxItems": 3}},
+          "sprite_mask": {"const": 7}, "sprite_entry": {"const": 19}, "sprite_table": {"$ref": "#/$defs/bytes", "minItems": 5, "maxItems": 5}
+        }},
+        "post_goodnight": {"type": "object", "additionalProperties": false, "required": ["palette_buffer", "brightness_bg", "brightness_sprite", "cycle"], "properties": {
+          "palette_buffer": {"$ref": "#/$defs/palette"}, "brightness_bg": {"const": 15}, "brightness_sprite": {"const": 15},
+          "cycle": {"type": "object", "additionalProperties": false, "required": ["mask", "entry", "colours"], "properties": {
+            "mask": {"const": 7}, "entry": {"const": 3}, "colours": {"$ref": "#/$defs/bytes", "minItems": 4, "maxItems": 4}
+          }}
+        }}
+      }
+    }
+  }
+}

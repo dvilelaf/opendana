@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/level.schema.json",
+  "title": "OpenDana level world file",
+  "description": "One world file (levels/world-NN.json) holds ten levels of the EU campaign. The grid is the final cell state; objects preserve the command stream order so the level can be rebuilt byte for byte (MJ2).",
+  "type": "object",
+  "required": ["schema_version", "id", "world", "grid_width", "grid_height", "levels"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "world": { "type": "integer", "minimum": 1, "maximum": 15 },
+    "grid_width": { "const": 16 },
+    "grid_height": { "const": 15 },
+    "levels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/level" }
+    }
+  },
+  "$defs": {
+    "hexRow": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{16}$",
+      "description": "One grid row: 16 hex digits, one per cell (0x0..0xF)."
+    },
+    "position": {
+      "type": "array",
+      "description": "Cell [x, y]. The raw byte is y*16+x.",
+      "items": { "type": "integer", "minimum": 0, "maximum": 15 },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "level": {
+      "type": "object",
+      "required": ["index", "number", "world", "round", "name", "player", "metadata", "grid", "objects"],
+      "additionalProperties": false,
+      "properties": {
+        "index": { "type": "integer", "minimum": 0, "maximum": 149 },
+        "number": { "type": "integer", "minimum": 1, "maximum": 150 },
+        "world": { "type": "integer", "minimum": 1, "maximum": 15 },
+        "round": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "name": { "type": "string", "pattern": "^[0-9]+-[0-9]+( .*)?$" },
+        "player": {
+          "type": "object",
+          "description": "Hero's start cell (exactly one Hero per level).",
+          "required": ["x", "y"],
+          "additionalProperties": false,
+          "properties": {
+            "x": { "type": "integer", "minimum": 0, "maximum": 15 },
+            "y": { "type": "integer", "minimum": 0, "maximum": 14 }
+          }
+        },
+        "metadata": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255,
+          "description": "Level header byte at this index, preserved verbatim."
+        },
+        "grid": {
+          "type": "array",
+          "minItems": 15,
+          "maxItems": 15,
+          "items": { "$ref": "#/$defs/hexRow" }
+        },
+        "objects": {
+          "type": "array",
+          "description": "The object record in stream order. Normal runs hold a type, a count and cell positions; specials are a 0x80..0x9F command code with one argument.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "object",
+                "required": ["type", "positions"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": { "type": "integer", "minimum": 1, "maximum": 127 },
+                  "positions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 255,
+                    "items": { "$ref": "#/$defs/position" }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": ["special", "argument"],
+                "additionalProperties": false,
+                "properties": {
+                  "special": { "type": "integer", "minimum": 128, "maximum": 159 },
+                  "argument": { "type": "integer", "minimum": 0, "maximum": 255 }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "OpenDana scene-data v1 (flat byte arrays)",
+  "type": "object",
+  "required": ["schema_version", "cycle_block", "cycle_bg", "map_world_up", "map_world_down", "cursor_body", "cursor_skin"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "cycle_block": {"type": "array", "minItems": 19, "maxItems": 19, "items": {"type": "integer", "minimum": 0, "maximum": 63}},
+    "cycle_bg": {"type": "array", "minItems": 4, "maxItems": 4, "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 15}},
+    "map_world_up": {"$ref": "#/$defs/directions"},
+    "map_world_down": {"$ref": "#/$defs/directions"},
+    "cursor_body": {"$ref": "#/$defs/pose"},
+    "cursor_skin": {"$ref": "#/$defs/pose"}
+  },
+  "$defs": {
+    "directions": {"type": "array", "minItems": 10, "maxItems": 10, "items": {"type": "integer", "minimum": 0, "maximum": 15}},
+    "pose": {"type": "array", "minItems": 8, "maxItems": 8,
+      "prefixItems": [
+        {"$ref": "#/$defs/byte"}, {"$ref": "#/$defs/attr"},
+        {"$ref": "#/$defs/byte"}, {"$ref": "#/$defs/attr"},
+        {"$ref": "#/$defs/byte"}, {"$ref": "#/$defs/attr"},
+        {"$ref": "#/$defs/byte"}, {"$ref": "#/$defs/attr"}
+      ], "items": false},
+    "byte": {"type": "integer", "minimum": 0, "maximum": 255},
+    "attr": {"enum": [0,1,2,3,64,65,66,67,128,129,130,131,192,193,194,195]}
+  }
+}

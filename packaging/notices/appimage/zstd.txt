@@ -1,0 +1,50 @@
+Component: zstd
+Version: 1.5.6
+License: BSD-3-Clause
+Origin: https://github.com/facebook/zstd
+
+Zstandard 1.5.6 (libzstd), statically linked into the AppImage runtime (to
+read zstd-compressed images). Zstandard is dual-licensed under BSD-3-Clause and
+GPL-2.0; this project elects the BSD license. Copyright Meta Platforms, Inc.
+and affiliates.
+
+The zstd source in the licence bundle (sources/zstd.tar.xz) and in the runtime
+source archive is the upstream 1.5.6 release with two changes needed by the
+audit gates: the directory tests/ (test inputs and four symlinks; nothing in it
+is compiled into the runtime) is left out, and the directory build/ (CMake,
+Meson and Visual Studio files, not used by the runtime build) is renamed
+build-files/. lib/, the only part compiled, is untouched; the pristine upstream
+tarball is the one named in sources.lock of the repository.
+
+--- license text (zstd.LICENSE) ---
+BSD License
+
+For Zstandard software
+
+Copyright (c) Meta Platforms, Inc. and affiliates. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+ * Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+ * Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+ * Neither the name Facebook, nor Meta, nor the names of its contributors may
+   be used to endorse or promote products derived from this software without
+   specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

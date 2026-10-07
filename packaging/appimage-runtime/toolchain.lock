@@ -1,0 +1,10 @@
+# C6.50: base image and toolchain of the runtime build (shell syntax, sourced).
+# Only the toolchain and musl come from the distribution; every library linked
+# into the runtime is built from source (sources.lock). Alpine 3.21 is the base the
+# upstream type2-runtime Dockerfile uses; clang 19.1.4 and gcc 14.2.0 are the
+# versions found in the runtime that was audited (docs/c6/C6.49-D.md D-04).
+OD_RT_IMAGE=alpine@sha256:ce64758a109eb420d874a118f87920e625e12d3634e03b4a5573fd9f6e5d3507
+OD_RT_IMAGE_RELEASE=3.21.8
+# apk packages, exact versions; the Dockerfile installs name=version and fails
+# if the repository no longer offers it. musl-dev supplies the static musl libc.a.
+OD_RT_APK="bash=5.2.37-r0 clang19=19.1.4-r0 lld=19.1.4-r0 llvm19=19.1.4-r1 gcc=14.2.0-r4 binutils=2.43.1-r3 musl-dev=1.2.5-r11 linux-headers=6.6-r1 meson=1.6.1-r0 samurai=1.2-r6 cmake=3.31.1-r0 autoconf=2.72-r0 automake=1.17-r0 libtool=2.4.7-r3 make=4.4.1-r2 patch=2.7.6-r10 pkgconf=2.3.0-r0 python3=3.12.15-r0 perl=5.40.4-r0 file=5.46-r2 xz=5.8.4-r0 coreutils=9.5-r2 findutils=4.10.0-r0 tar=1.35-r2 gettext-dev=0.22.5-r0"

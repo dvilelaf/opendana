@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AndroidManifest.xml - template for the Android port of OpenDana.
+
+  This is NOT used by the desktop build. See docs/PORTABILIDAD.md for the full
+  NDK/gradle recipe. Copy it into your app module (app/src/main/AndroidManifest.xml)
+  and adjust the package/applicationId and the label.
+
+  The activity is SDL2's org.libsdl.app.SDLActivity; the native library is the
+  `opendana` shared object produced by -DOD_ANDROID=ON.
+
+  Permissions: none are required. The game ships its assets inside the APK
+  (assets/ folder) and only needs read access to them.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.opendana.native"
+    android:versionCode="1"
+    android:versionName="0.2.0">
+
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.gamepad" android:required="false" />
+
+    <application
+        android:label="OpenDana"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:appCategory="game">
+
+        <activity
+            android:name="org.libsdl.app.SDLActivity"
+            android:label="OpenDana"
+            android:exported="true"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/worlds.schema.json",
+  "title": "OpenDana per-world graphics (worlds.json)",
+  "description": "One document holds the fifteen worlds. Each world carries its PPU palette RAM snapshot (32 bytes) and the sixteen cell types the levels use (0x00-0x0F). A cell is a 2x2 CHR tile block; its left and right columns are indexed by the neighbour edge class (0 = none, 1 = empty floor, 2 = ice). The data is a lossless view of the extracted world_gfx tables (MJ2).",
+  "type": "object",
+  "required": ["schema_version", "id", "worlds"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "note": { "type": "string" },
+    "worlds": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 15,
+      "items": { "$ref": "#/$defs/world" }
+    }
+  },
+  "$defs": {
+    "nesIndex": { "type": "string", "pattern": "^0x[0-9A-Fa-f]{1,2}$" },
+    "chrTile": { "type": "string", "pattern": "^0x[0-9A-Fa-f]{2,3}$" },
+    "column": {
+      "type": "array",
+      "description": "(TL, BL) or (TR, BR) CHR tiles, one entry per edge class.",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "array",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": { "$ref": "#/$defs/chrTile" }
+      }
+    },
+    "cell": {
+      "type": "object",
+      "required": ["known", "has_edges", "left", "right", "bg_pal"],
+      "additionalProperties": false,
+      "properties": {
+        "known": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "has_edges": { "type": "boolean" },
+        "left": { "$ref": "#/$defs/column" },
+        "right": { "$ref": "#/$defs/column" },
+        "bg_pal": { "type": "integer", "minimum": 0, "maximum": 3 }
+      }
+    },
+    "world": {
+      "type": "object",
+      "required": ["world", "palette_ram", "cells"],
+      "additionalProperties": false,
+      "properties": {
+        "world": { "type": "integer", "minimum": 1, "maximum": 15 },
+        "palette_ram": {
+          "type": "array",
+          "description": "PPU palette RAM as 32 NES 6-bit colour indices.",
+          "minItems": 32,
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/nesIndex" }
+        },
+        "cells": {
+          "type": "object",
+          "description": "Cell type 0x00-0x0F -> graphics.",
+          "propertyNames": { "pattern": "^[0-9A-Fa-f]{2}$" },
+          "additionalProperties": { "$ref": "#/$defs/cell" }
+        }
+      }
+    }
+  }
+}

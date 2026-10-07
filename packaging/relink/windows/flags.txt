@@ -1,0 +1,33 @@
+SDL2 2.32.10 MinGW-w64 build of the shipped SDL2.dll - compile/link flags
+Recorded from the real CMake (Unix Makefiles) build that produced SDL2.dll
+SHA-256 17134f9b04ba24041298e788025e30f02ebaebed392b4b39a12807fe260101b3.
+Machine paths are written as <SDL2-2.32.10> (source tree) and <build>.
+
+== configure (build-sdl.sh; packaging/build-sdl2.sh --target windows) ==
+cmake -S <SDL2-2.32.10> -B <build> -G "Unix Makefiles" -DCMAKE_TOOLCHAIN_FILE=<SDL2-2.32.10>/build-scripts/cmake-toolchain-mingw64-x86_64.cmake \
+  -DCMAKE_INSTALL_PREFIX=<prefix> -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=ON -DSDL_TEST=OFF -DSDL_TESTS=OFF \
+  "-DCMAKE_C_FLAGS=-ffile-prefix-map=<work>=. -ffile-prefix-map=<SDL2-2.32.10>=SDL2-2.32.10 -ffile-prefix-map=<build>=build" \
+  "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--no-insert-timestamp"
+SOURCE_DATE_EPOCH=1756762407 TZ=UTC; installed with `cmake --install --strip`
+(C6.51: the -ffile-prefix-map flags and --no-insert-timestamp are added to the
+C_FLAGS and the link line below; the rest is unchanged from the previous recording)
+
+== compiler ==
+x86_64-w64-mingw32-gcc (GCC) 10-win32 20220113
+Debian/Ubuntu packages: gcc-mingw-w64-x86-64-win32 10.3.0-14ubuntu1+24.3, mingw-w64-x86-64-dev 8.0.0-1, binutils-mingw-w64-x86-64 2.38-3ubuntu1+9build1
+
+== flags.make (CMakeFiles/SDL2.dir) ==
+C_DEFINES = -DDLL_EXPORT -DUSING_GENERATED_CONFIG_H
+C_INCLUDES = @CMakeFiles/SDL2.dir/includes_C.rsp
+C_FLAGS =  -idirafter "<SDL2-2.32.10>/src/video/khronos"  -Wall -Wundef -fno-strict-aliasing -Wdeclaration-after-statement -fvisibility=hidden -Wshadow -Wno-unused-local-typedefs -mmmx -msse -msse2 -msse3  -DSDL_BUILD_MAJOR_VERSION=2 -DSDL_BUILD_MINOR_VERSION=32 -DSDL_BUILD_MICRO_VERSION=10 -O3 -DNDEBUG
+RC_DEFINES = -DDLL_EXPORT -DUSING_GENERATED_CONFIG_H
+RC_INCLUDES = -I <build>/include -I <build>/include/SDL2 -I <build>/include-config-release/SDL2 -I <build>/include-config-release
+RC_FLAGS = 
+
+== includes_C.rsp ==
+-I<build>/include -I<build>/include/SDL2 -I<build>/include-config-release/SDL2 -I<build>/include-config-release
+
+
+== link (CMakeFiles/SDL2.dir/link.txt, linklibs.rsp) ==
+/usr/bin/x86_64-w64-mingw32-gcc  -idirafter "<SDL2-2.32.10>/src/video/khronos"  -Wall -Wundef -fno-strict-aliasing -Wdeclaration-after-statement -fvisibility=hidden -Wshadow -Wno-unused-local-typedefs -mmmx -msse -msse2 -msse3  -DSDL_BUILD_MAJOR_VERSION=2 -DSDL_BUILD_MINOR_VERSION=32 -DSDL_BUILD_MICRO_VERSION=10 -O3 -DNDEBUG -static-libgcc -shared -o SDL2.dll -Wl,--out-implib,libSDL2.dll.a -Wl,--major-image-version,2,--minor-image-version,32 -Wl,--whole-archive CMakeFiles/SDL2.dir/objects.a -Wl,--no-whole-archive @CMakeFiles/SDL2.dir/linklibs.rsp
+ -lm -lkernel32 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lversion -luuid -ladvapi32 -lsetupapi -lshell32 -ldinput8 -Wl,--no-undefined -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

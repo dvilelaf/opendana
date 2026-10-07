@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/mod.schema.json",
+  "title": "OpenDana mod (mods/<id>/mod.json)",
+  "description": "A mod is a directory that overlays the base package by relative path (last layer wins). mod.json has the same shape as pack.json except that a mod need not own any level: its lists name the files it actually ships, and the loader resolves any file present in the mod directory regardless of these lists. `content/base/pack.json` uses pack.schema.json. (additive, still schema_version 2): every file a mod declares must exist inside it (no '..', no absolute path) and be one the package reads; a `levels` entry that is not a package world file is a level patch (world-file shape; each entry's `number` replaces that package level only), and `graphics.chr_patches` writes the mod's own 8x8 tiles over the package CHR.",
+  "type": "object",
+  "required": ["schema_version", "id", "version"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "enum": [1, 2] },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "grid_width": { "const": 16 },
+    "grid_height": { "const": 15 },
+    "level_count": { "type": "integer", "minimum": 0, "maximum": 150 },
+    "levels": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 150,
+      "items": { "type": "string", "pattern": "^levels/[A-Za-z0-9._-]+\\.json$" },
+      "description": "Level files the mod ships, relative to the mod root. A package world path (levels/world-NN.json) replaces that whole world (all 10 levels); any other path is a level patch whose entries replace single package levels by `number`."
+    },
+    "load_order": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "graphics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chr": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^graphics/chr/[A-Za-z0-9._-]+\\.png$" }
+        },
+        "sprites": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^graphics/sprites/[A-Za-z0-9._-]+\\.json$" }
+        },
+        "chr_patches": {
+          "type": "array",
+          "description": "the mod's own tiles. The PNG holds whole 8x8 tiles row by row, written over the package CHR from `tile` on (all within tiles 0..8191); every pixel is grey 0/85/170/255 or fully transparent (keep the package pixel).",
+          "items": {
+            "type": "object",
+            "required": ["png", "tile"],
+            "additionalProperties": false,
+            "properties": {
+              "png": { "type": "string", "pattern": "^graphics/[A-Za-z0-9._-]+(/[A-Za-z0-9._-]+)*\\.png$" },
+              "tile": { "type": "integer", "minimum": 0, "maximum": 8191 }
+            }
+          }
+        }
+      }
+    },
+    "worlds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^worlds\\.json$" }
+    },
+    "palettes": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^palettes/[A-Za-z0-9._-]+\\.json$" }
+    },
+    "audio": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^audio/[A-Za-z0-9._-]+\\.json$" }
+    },
+    "screens": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^screens/[A-Za-z0-9._-]+\\.json$" }
+    },
+    "engine": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^engine/[A-Za-z0-9._-]+\\.json$" }
+    }
+  }
+}

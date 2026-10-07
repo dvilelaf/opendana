@@ -1,0 +1,42 @@
+# Build output
+build/
+cmake-build-*/
+
+# Python tooling
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Toolchain droppings
+*.o
+*.a
+*.so
+*.dylib
+*.dll
+*.obj
+*.pdb
+compile_commands.json
+.cache/
+
+# Editor / OS
+*.swp
+*~
+.DS_Store
+
+# Content imported from the user's own ROM lives in the user's data folder,
+# never in the tree. These rules keep it out if an import is ever run here.
+content/base/
+/assets/*
+# The UI fonts (Inter, SIL OFL) are packaged data of our own, not imported content.
+!/assets/fonts/
+
+# Captures and recordings of the original game never belong to the tree.
+*.rgb.gz
+*.track
+
+# The example mods derive their tile image from the imported content when they
+# are used (tools/content/make_mod_chr.py); it is not versioned. These rules keep
+# it out of the tree even if the generator is run here.
+mods/ejemplo/graphics/chr/
+content/mods/test-gfx/graphics/chr/

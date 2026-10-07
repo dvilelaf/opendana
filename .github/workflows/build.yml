@@ -1,0 +1,83 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# CI runs only the tests that work in a public clone: no ROM, no imported
+# content and no private data are needed. Anything that needs your own ROM is
+# run locally (see CONTRIBUTING.md).
+jobs:
+  linux:
+    name: Linux (ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install SDL2
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev
+      - name: Build
+        run: bash build.sh
+      - name: Unit tests (core, extension layer, interface)
+        run: build/opendana_tests_public --category unit
+      - name: Interface and platform tests
+        run: |
+          bash tests/editor-ui-layout-run.sh
+          bash tests/ui-screens-layout-run.sh
+          bash tests/ui-behaviour-run.sh
+          bash tests/state-compat-run.sh
+          bash tests/cursor-hide-run.sh
+          bash tests/desktop-run.sh
+          bash tests/import-picker-child.sh
+      - name: Packaging controls
+        run: |
+          bash tests/linux-package-unit.sh
+      - name: Example mods
+        run: |
+          bash tests/mods-chr-contract.sh
+          python3 tools/content/make_example_mod.py --check
+      - name: Upload the built binary on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-build
+          path: build/
+          if-no-files-found: ignore
+
+  # Best-effort, non-blocking: the core has no SDL and no POSIX-only code, so
+  # it should build with MinGW too. It builds the content-free unit runner
+  # (target opendana_tests_public) and runs it. The interactive SDL front end
+  # is built by the Windows package script, not here.
+  windows-core:
+    name: Windows (MSYS2/MINGW64, core only, best-effort)
+    runs-on: windows-latest
+    continue-on-error: true
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+      - name: Build the core and the unit test runner (no SDL)
+        run: |
+          mkdir -p build
+          cmake -S . -B build -G Ninja \
+            -DOD_BUILD_APP=OFF -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target opendana_tests_public
+      - name: Run the unit tests
+        run: ./build/opendana_tests_public.exe --category unit

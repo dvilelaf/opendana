@@ -1,0 +1,25 @@
+# C6.30: git pathspecs that form the corresponding source of the shipped opendana
+# binary (GPL-3.0-or-later): everything needed to build, install, run and modify
+# it. packaging/make-sources.sh archives exactly these paths of the packaged
+# commit with `git archive`, then removes any file the ROM auditor flags.
+# Deliberately NOT included: docs/ (reports and reference captures), tests/ (fixtures
+# derived from the original), mods/ and content/ (example levels copied from the
+# original), tools/ (development and audit tooling). None is needed to build opendana;
+# CMake disables the test runner when tests/ is absent.
+CMakeLists.txt
+build.sh
+LICENSE
+NOTICE
+README.md
+docs/MODDING.md
+external
+include
+schema
+src
+assets/fonts
+packaging
+# C6.51: macOS is out of scope and its scripts name a private host, a VM and a
+# person; they stay out of the corresponding source (the private lab keeps them).
+:(exclude)packaging/build-macos.sh
+:(exclude)packaging/macos-remote-build.sh
+:(exclude)packaging/macos-sources.sha256

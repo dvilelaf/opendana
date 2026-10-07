@@ -1,0 +1,29 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "title":"Post-ending finite root7 with terminal engine publication wait",
+ "type":"object", "additionalProperties":false,
+ "required":["schema_version","id","source","scenes","poses","animations","bands","cycles","velocities","bg_bank_sets","band_addresses","colours","text_addresses","image_cycles"],
+ "properties":{
+  "schema_version":{"const":1},"id":{"const":"post-ending"},
+  "source":{"$ref":"cinematics.schema.json#/properties/source"},
+  "scenes":{"type":"array","minItems":1,"maxItems":1,"items":{"type":"object","additionalProperties":false,"required":["index","program","text"],"properties":{
+    "index":{"const":7},"program":{"type":"array","minItems":387,"maxItems":387,"items":{"$ref":"cinematics.schema.json#/$defs/instruction"}},
+    "text":{"type":"array","minItems":785,"maxItems":785,"items":{"$ref":"cinematics.schema.json#/$defs/text_instruction"}}
+  }}},
+  "poses":{"$ref":"cinematics.schema.json#/properties/poses"},
+  "animations":{"type":"array","minItems":46,"maxItems":46,"items":{"$ref":"cinematics.schema.json#/$defs/rows"}},
+  "bands":{"$ref":"cinematics.schema.json#/properties/bands"},
+  "cycles":{"$ref":"cinematics.schema.json#/properties/cycles"},
+  "velocities":{"$ref":"cinematics.schema.json#/properties/velocities"},
+  "bg_bank_sets":{"$ref":"cinematics.schema.json#/properties/bg_bank_sets"},
+  "band_addresses":{"$ref":"cinematics.schema.json#/properties/band_addresses"},
+  "colours":{"$ref":"cinematics.schema.json#/properties/colours"},
+  "text_addresses":{"$ref":"cinematics.schema.json#/properties/text_addresses"},
+  "image_cycles":{"description":"Dense selector slots0..7; unused slots explicitly empty, only selectors3/4 each use two duration/CHR pairs","type":"array","minItems":8,"maxItems":8,"prefixItems":[
+   {"type":"array","maxItems":0},{"type":"array","maxItems":0},{"type":"array","maxItems":0},
+   {"$ref":"cinematics.schema.json#/$defs/bytes","minItems":4,"maxItems":4},
+   {"$ref":"cinematics.schema.json#/$defs/bytes","minItems":4,"maxItems":4},
+   {"type":"array","maxItems":0},{"type":"array","maxItems":0},{"type":"array","maxItems":0}
+  ],"items":{"type":"array"}}
+ }
+}

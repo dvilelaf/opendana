@@ -1,0 +1,29 @@
+SDL2 2.32.10 shared-library build - exact per-file compile flags
+Extracted from the real Ninja build of the shipped libSDL2-2.0.so.0.
+Machine paths are written as <SDL2-2.32.10> (source tree) and <build/sdl>
+(CMake build directory) instead of the builder's machine paths.
+Target: CMakeFiles/SDL2.dir (SDL_SHARED=ON, SDL_STATIC=OFF, Release).
+
+== configure ==
+cmake -S <SDL2-2.32.10> -B build/sdl -G Ninja -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=<prefix> -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF \
+  "-DCMAKE_C_FLAGS=-ffile-prefix-map=<work>=. -ffile-prefix-map=<SDL2-2.32.10>=SDL2-2.32.10 -ffile-prefix-map=<build/sdl>=build"
+SOURCE_DATE_EPOCH=1756762407 TZ=UTC; installed with `cmake --install --strip`
+(C6.51: the -ffile-prefix-map flags are added to the per-file FLAGS below; the
+rest is unchanged from the previous recording)
+
+== per-file FLAGS (CMakeFiles/SDL2.dir) ==
+  FLAGS = -idirafter "<SDL2-2.32.10>/src/video/khronos" -DHAVE_LINUX_VERSION_H  -Wall -Wundef -fno-strict-aliasing -Wdeclaration-after-statement -fvisibility=hidden -Wshadow -Wno-unused-local-typedefs -fdiagnostics-color=always -mmmx -msse -msse2 -msse3  -isystem/usr/include -D_REENTRANT  -DSDL_BUILD_MAJOR_VERSION=2 -DSDL_BUILD_MINOR_VERSION=32 -DSDL_BUILD_MICRO_VERSION=10 -O3 -DNDEBUG -fPIC
+
+== per-file DEFINES ==
+  DEFINES = -DSDL2_EXPORTS -DUSING_GENERATED_CONFIG_H
+
+== per-file INCLUDES ==
+  INCLUDES = -I<build/sdl>/include -I<build/sdl>/include/SDL2 -I<build/sdl>/include-config-release/SDL2 -I<build/sdl>/include-config-release -I/usr/include/dbus-1.0 -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include -isystem <SDL2-2.32.10> -isystem <build/sdl>/wayland-generated-protocols
+
+== compiler ==
+GCC: (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0
+== SDL version macros (include/SDL_version.h) ==
+#define SDL_MAJOR_VERSION   2
+#define SDL_MINOR_VERSION   32
+#define SDL_PATCHLEVEL      10

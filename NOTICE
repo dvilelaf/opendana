@@ -1,0 +1,69 @@
+OpenDana
+========
+
+OpenDana is an independent, unofficial, from-scratch reimplementation in C11 of
+a classic NES puzzle game, for preservation and study. It is not affiliated
+with, endorsed by, or sponsored by the rights holders of the original game.
+
+Legal notice
+------------
+OpenDana needs the user's own copy of the European (EU/PAL) ROM of
+"Solomon's Key 2 / Fire 'n Ice". That title, its names, characters, levels,
+graphics, music, sound and trademarks belong to their respective owners
+(Tecmo / Koei Tecmo).
+
+- This project contains no ROM, no dump, no recording, no image and no data
+  taken from the original game. Neither the source tree nor any release
+  package includes any of it.
+- The user supplies the ROM. The program reads it once (`opendana --import-rom`)
+  and stores the imported content in the user's own folder, for personal use.
+  The ROM is not needed afterwards. The accepted ROM is identified only by its
+  SHA-256:
+  853646c50889dfb7a74c2acf7cf3b76f42d044745433f706dca33f47d826cd1d
+- Product and company names are trademarks of their owners and are used only to
+  say which ROM the program accepts.
+
+Source code license
+-------------------
+The source code of OpenDana (unless a file says otherwise) is licensed under
+the GNU General Public License, version 3 or later
+(SPDX-License-Identifier: GPL-3.0-or-later). See LICENSE.
+
+The application icon (packaging/icon/) is original artwork of the project owner,
+under the same licence as the project (GPL-3.0-or-later).
+
+The documentation and the example mods under mods/ and content/mods/ (which
+contain only data made for this project) are released under CC0-1.0.
+
+Third-party components
+----------------------
+The full licence texts of what is shipped in a package are in its
+`license-bundle/notices/` folder; the corresponding sources are in
+`license-bundle/sources/`.
+
+| Component | Version | Licence | Where |
+|---|---|---|---|
+| SDL2 | 2.32.10 | Zlib | linked library (`libSDL2-2.0.so.0`, `SDL2.dll`) |
+| Code embedded in SDL2: Sun fdlibm (SunPro), HIDAPI (BSD-3-Clause), yuv2rgb (BSD-3-Clause), imKStoUCS (MIT), edid-parse (MIT), Wayland protocols (MIT), Khronos headers (Apache-2.0) | as in SDL 2.32.10 | see `notices/SDL2-embedded.txt` of each package (the Windows list is shorter) | inside the SDL2 library |
+| cJSON | 1.7.18 | MIT | `external/cJSON`, compiled in |
+| stb_image | 2.30 | MIT (alternative A) or public domain | `external/stb`, compiled in |
+| stb_image_write | 1.16 | MIT (alternative A) or public domain | `external/stb`, compiled in |
+| stb_truetype | 1.26 | MIT (alternative A) or public domain | `external/stb`, compiled in |
+| Inter (Regular, SemiBold), Copyright 2020 The Inter Project Authors | 4.001 | SIL Open Font License 1.1 (`assets/fonts/OFL.txt`) | font files read at run time, not embedded in the program |
+| font8x8_basic by Daniel Hepper | n/a | public domain | compiled in (`src/app/ui_font.c`) |
+| MinGW-w64 runtime and libgcc | mingw-w64 8.0.0-1, GCC 10.3.0 | ZPL-2.1, BSD-3-Clause, Lucent gdtoa, SunPro, public domain, and GPL-3.0-or-later with the GCC Runtime Library Exception 3.1 | linked into `opendana.exe` and `SDL2.dll` (Windows ZIP only) |
+| AppImage runtime (type2-runtime) | pinned in `packaging/pins.sh` | MIT | first bytes of the AppImage file |
+| libfuse | in the runtime | LGPL-2.1 | statically linked in the AppImage runtime |
+| squashfuse | in the runtime | BSD-2-Clause | AppImage runtime |
+| zstd | in the runtime | BSD-3-Clause | AppImage runtime |
+| zlib | in the runtime | Zlib | AppImage runtime |
+| musl libc | in the runtime | MIT | AppImage runtime |
+| mimalloc | in the runtime | MIT | AppImage runtime |
+
+The AppImage runtime components in the last seven rows are covered by the
+source offer and the notices that travel inside the AppImage. The glibc and
+libm used by the Linux TAR are the system's own dynamic libraries.
+
+No warranty. This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for details.

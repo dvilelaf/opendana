@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/pack.schema.json",
+  "title": "OpenDana content pack",
+  "description": "pack.json at the root of a content package (content/base) or a mod directory (mods/<id>). Mods use the same shape in mod.json and override whole files by relative path.",
+  "type": "object",
+  "required": ["schema_version", "id", "version", "levels"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 2 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "grid_width": { "const": 16 },
+    "grid_height": { "const": 15 },
+    "level_count": { "type": "integer", "minimum": 1, "maximum": 150 },
+    "levels": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 150,
+      "items": { "type": "string", "pattern": "^levels/world-[0-9]{2}\\.json$" },
+      "description": "World files, relative to the pack root, in level order."
+    },
+    "load_order": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional mod ordering hint (base + mods)."
+    },
+    "graphics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "chr": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^graphics/chr/[A-Za-z0-9._-]+\\.png$" },
+          "description": "Indexed 4-colour CHR sheets, concatenated in order."
+        },
+        "sprites": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^graphics/sprites/[A-Za-z0-9._-]+\\.json$" },
+          "description": "Metasprites and animation tables."
+        }
+      }
+    },
+    "worlds": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^worlds\\.json$" },
+      "description": "Per-world cell graphics and palette RAM."
+    },
+    "palettes": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^palettes/[A-Za-z0-9._-]+\\.json$" },
+      "description": "Master palettes."
+    },
+    "audio": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^audio/[A-Za-z0-9._-]+\\.json$" },
+      "description": "Sequencer data."
+    },
+    "screens": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^screens/[A-Za-z0-9._-]+\\.json$" },
+      "description": "Interactive-screen artwork in the package."
+    },
+    "cinematics": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^screens/(cinematics/[A-Za-z0-9._-]+\\.json|tracks/[A-Za-z0-9._-]+\\.(track|fade))$" },
+      "description": "ROM-derived semantic cinematic documents (schema/cinematics.schema.json), resolved and validated through the complete active VFS; missing/malformed declarations are errors. Legacy track/fade paths are accepted only for historical reference packs, never emitted by the ROM importer."
+    },
+    "audio_layout": {
+      "description": "Positions inside the sparse image that audio/sequence.json fills. Slots are numbered as in the sequence stream (first_slot .. first_slot + slot_count - 1) and hold slot_size bytes. A pointer stored inside the sound data is a 16-bit address: each window says which slot an address range of slot_size bytes belongs to, or -1 when the sequence chooses the slot. Table offsets count bytes from the start of the first slot. world_music is the sound request played for each world.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot_size",
+        "first_slot",
+        "slot_count",
+        "windows",
+        "tables",
+        "sample_base",
+        "world_music"
+      ],
+      "properties": {
+        "slot_size": {
+          "const": 8192
+        },
+        "first_slot": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "slot_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6
+        },
+        "windows": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "first",
+              "slot"
+            ],
+            "properties": {
+              "first": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 57344
+              },
+              "slot": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 255
+              }
+            }
+          }
+        },
+        "tables": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fade_steps",
+            "song_slot",
+            "song_start",
+            "periods",
+            "durations",
+            "effects",
+            "volume_patterns",
+            "pitch_steps"
+          ],
+          "properties": {
+            "fade_steps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "one byte per attenuation level"
+            },
+            "song_slot": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "one byte per request id: the slot of its header"
+            },
+            "song_start": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "one word per request id: the address of its header"
+            },
+            "periods": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "16 words: note periods"
+            },
+            "durations": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "128 words: note lengths"
+            },
+            "effects": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "64 records of 4 bytes: effect parameters"
+            },
+            "volume_patterns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "one word per pattern: the address of its steps"
+            },
+            "pitch_steps": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 8191,
+              "description": "pairs of wait and delta"
+            }
+          }
+        },
+        "sample_base": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535,
+          "description": "the address the sample channel counts from"
+        },
+        "world_music": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 119
+          }
+        }
+      }
+    },
+    "engine": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^engine/[A-Za-z0-9._-]+\\.json$" },
+      "description": "Full runtime packs declare enemy-tables.json, hero-programs.json, boss-tables.json, rom-data.json, editor-data.json, scene-data.json and presentation-data.json (schema/presentation-data.schema.json): ROM-derived engine, boss-event, password, editor, scene and presentation tables. All five data families plus declared cinematics parse through the complete layered VFS before table group publication; missing or malformed data aborts runtime loading. Level-only synthetic format fixtures may omit engine."
+    }
+  }
+}

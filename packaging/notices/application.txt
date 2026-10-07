@@ -1,0 +1,18 @@
+Component: application
+License: GPL-3.0-or-later
+SPDX-License-Identifier: GPL-3.0-or-later
+
+This is the native reimplementation itself (the opendana executable). Its complete
+corresponding source is sources/application.tar.xz in this bundle: the
+`git archive` of the exact commit printed by `opendana --version` (the packaging
+gate refuses a package whose source archive is of another commit). The version
+and commit are also listed in SOURCES.json.
+
+The full GNU General Public License version 3 text is the LICENSE file next
+to README.md in this package (and in the source archive); the project's
+intellectual-property statement is the NOTICE file.
+
+The application is an unofficial, from-scratch reimplementation of the NES
+game; the player imports their own legally owned ROM once. Every package is
+checked with the project's ROM auditor before it is published (the audit
+report travels next to the package).

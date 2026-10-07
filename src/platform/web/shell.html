@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  shell.html - minimal Emscripten HTML shell for the web build.
+
+  Passed to emcc as --shell-file by CMake when OD_EMSCRIPTEN is enabled. The
+  {{{ SCRIPT }}} marker is replaced by Emscripten with the generated loader.
+  Assets are embedded at link time with --preload-file assets@/assets, so the
+  page is fully self-contained and needs no ROM.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>OpenDana</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; background: #000; }
+    body { display: flex; flex-direction: column; align-items: center;
+           justify-content: center; gap: 8px; }
+    canvas { image-rendering: pixelated; background: #000;
+             max-width: 100%; height: auto; outline: none; }
+    #status { color: #ddd; font: 14px/1.4 monospace; min-height: 1.4em; }
+    #notice { color: #888; font: 12px monospace; }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+  <div id="status">OpenDana</div>
+  <div id="notice">arrows move &middot; Z/SPACE = A &middot; X = B &middot; ESC = back</div>
+  <script>
+    var statusElement = document.getElementById('status');
+    var Module = {
+      canvas: document.getElementById('canvas'),
+      arguments: [],
+      setStatus: function (text) {
+        if (!Module.setStatus.last) Module.setStatus.last = { time: Date.now(), text: '' };
+        if (text === Module.setStatus.last.text) return;
+        statusElement.textContent = text;
+        Module.setStatus.last.time = Date.now();
+        Module.setStatus.last.text = text;
+        if (text && text.indexOf('Exception') === 0) statusElement.style.color = '#f66';
+      },
+      onAbort: function (what) { Module.setStatus('Aborted: ' + what); },
+      print: function (text) { if (text) console.log(text); },
+      printErr: function (text) { if (text) console.warn(text); }
+    };
+    Module.setStatus('Downloading...');
+  </script>
+  {{{ SCRIPT }}}
+</body>
+</html>

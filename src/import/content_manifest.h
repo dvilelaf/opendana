@@ -1,0 +1,75 @@
+/* content_manifest.h - reference manifest of the imported package (C6.29).
+ *
+ * After extracting, the importer compares the SHA-256 of
+ * every produced file with this reference and refuses (deleting what it
+ * extracted) when anything differs. It holds ONLY hashes and relative paths,
+ * never bytes of the original. The reference is never created or rewritten by
+ * the importer itself (C6.22 PUB-6): it is versioned here, generated from
+ * src/import/content-manifest.sha256, and tests/import-manifest.sh checks both
+ * that this header equals that file and that a fresh import reproduces it.
+ *
+ * Changing an extractor's output means updating both files in the same commit:
+ * `bash tools/audit/content_manifest.sh --from PKG > src/import/content-manifest.sha256`
+ * then `bash tools/audit/content_manifest.sh --header`.
+ * Format: one "sha256  relative/path" line per file, sorted by path (strcmp).
+ */
+#ifndef OD_IMPORT_CONTENT_MANIFEST_H
+#define OD_IMPORT_CONTENT_MANIFEST_H
+
+static const char *const od_content_reference_lines[] = {
+    "950ea586871b7eaa41b9fed93c863b8c4b8cce480674c9719e1e70fd38b83065  audio/sequence.json",
+    "fadfc46c723877cf129732d26c2943b50aeb6ed70a13d598b349abebb167008f  engine/boss-tables.json",
+    "a539c72ebae8395a8d714767a95d96ac4a45deb514205ea9f65bae92764e1adf  engine/editor-data.json",
+    "41416690a4c62fbfb06e0e5ffc466ab19e71579545e5bdd535825330bc52f5a9  engine/enemy-tables.json",
+    "0c51c41e16c1eb2d6932d40944171e47af7b1399fce100d6b9e5a7b08c53bb45  engine/hero-programs.json",
+    "6318bec3e3c33675893f369cfbe2fcfc025ee791be2f959325ed44d436a24ddc  engine/presentation-data.json",
+    "82be015d13eb010aa5781183c6e694b88d2fa7a7084971f3c20bcfaf2567aeb4  engine/rom-data.json",
+    "73d1d98f37bbf06873ff87ba23f908ad78f13bf3ec11e796c9b51a5c00b711d1  engine/scene-data.json",
+    "5cb64dd6c68b9493a8c52099f5911355a3e9a47492ef7de8bb8f267938c5fb6f  graphics/chr/chr-00.png",
+    "f05c620ad513ba8d39b2924997f7bfd22361a4c1493d33be3ee970cae44f53be  graphics/chr/chr-01.png",
+    "0e705c94a3bdcd20a379119293f310a6340d353bd0819d0b176cebc5a1921f28  graphics/chr/chr-02.png",
+    "a3d99ebd520684dadcc0589a95011db67e42d05f5c4b094990777d5c397bf84c  graphics/chr/chr-03.png",
+    "e3cbeea494ca70c42fde449bdad805587f131a8f2a852e58ec4d47150c9b4725  graphics/chr/chr-04.png",
+    "870748198cd15d6a8cdd16541e3a1ab941c7b84d2db4bd664b052fbc49fb769e  graphics/chr/chr-05.png",
+    "60bc929d51989cc59287cfd0e08bc1f13da6eefcb7d9f9b8085dcab41892e878  graphics/chr/chr-06.png",
+    "eb86a49c8767d66bdc62110065abe49495aa5e468f5e57bbded09e291bebfc43  graphics/chr/chr-07.png",
+    "074ef3c47bc621f31b14ceb3f54146415f5b45ff52680e4fa8851c9bfcb9558d  graphics/sprites/poses.json",
+    "7963d546eb48d628fe922d4dd5c299eb51d14e0b5a58970a7d803e4fb1891c3f  levels/world-01.json",
+    "f9b1d6e3646df1aa9c13f05e80225b0369eb1f3452ca9d6aa54135b7cc856369  levels/world-02.json",
+    "ee0f5fd3f69864d0b3b5d46484c0b2f19e2285115505e73629b39f59f3f9d748  levels/world-03.json",
+    "f36a270216113880d76729b34fe3420cfc4d86eddec30092e59b11eff94a35cb  levels/world-04.json",
+    "8d824871596af8c383c72942236d5abf7748dd6a6264b5bdd13589a75621aa89  levels/world-05.json",
+    "8c5a5a0aa3c984db11aefd6349ac9d73d0341612a736c3ddb628dae32223f9a3  levels/world-06.json",
+    "8937ffbdc6ecfdc1224b6bbccb0ad79b8f3ea0379bec573a7b67be67317ea40c  levels/world-07.json",
+    "f92c203e8a8a9c74da7de64e70e5e8576bbb6d9ff92bf2e6b994a6828aeecb61  levels/world-08.json",
+    "da99c5005370d004db1d3654dc21a28139c0cfd2f880b1453053412033d4970c  levels/world-09.json",
+    "da7a0d08943935bb8525507911cc6c7e3f55c1395300cf1208cb59abe8a3c63f  levels/world-10.json",
+    "4c1bd0eb8690fb8f00d5cb3e4243ddadbe3fc255e593c857f23b97a0220df870  levels/world-11.json",
+    "6931ef86bfdf097b32cb30bb0bd1c2c5c56868219981742bab788fd82aad1777  levels/world-12.json",
+    "99d9987bcc7f99b3f565bdf38ee7675e7a580235ac59e88c3542dafb4dd763c1  levels/world-13.json",
+    "b939f51871285747e926b407c53276cf14b055e599248eedd02178c4fce63724  levels/world-14.json",
+    "a7a47ca3d5b3572c7856d5f228f588d9cfa22415e602fce705c8958e072ed7b2  levels/world-15.json",
+    "ac7603d0f16757f98e1862c126735dc780084246cf2a4d0452fb6bc8b82b4fdb  pack.json",
+    "e79d7b61912ae87c83b8be2991f26febd38cdbc717446d8537cf045c7f518ee3  palettes/master.json",
+    "43d73b8833391c6527e8a72c57b555b58e4174cabfdc2765d7703da8714c8384  screens/boss-arena.json",
+    "3f72c081e122736b34b3818ba27a198de75cff655afd7d0c894201663d068fbd  screens/boss-background.json",
+    "2cad4c8fc2d55f315a20823db745418de7bbf0d9acc54d0a1ac62e99c5871519  screens/cinematics/bootstrap.json",
+    "a43e70caa9202bea848c1185a4cc3fe524c4a69acb5743b148c35060c0422a23  screens/cinematics/boss-ending.json",
+    "c763b20ff7c014d21889c99ae9481781a22cdde7650fce18c2e7291731e5db75  screens/cinematics/castle-appears.json",
+    "0f23cffaa91ef679a98b072f141a1678aeb794c3e9e8766ba1e7055b0488a593  screens/cinematics/castle-round10.json",
+    "853908301ebc9214d7cf5b80a7abee2a2a1c5e009a774602037826709bd1bae1  screens/cinematics/editor-entry.json",
+    "1cc0f7331749cd0ea4a5db6208fba43c0dcc2613693f849ee76bb638a3647fa2  screens/cinematics/goodnight-hidden.json",
+    "5492ba816f66bada94f4ed88df3d3129753c51bda8902c9dd8e8ec068ae422aa  screens/cinematics/post-ending.json",
+    "abd97eb57d31c38a34ec11ce5bfe3a71cc4bbaab8249ae61263fc5888bab5be8  screens/cinematics/world-clear.json",
+    "4ae21ec162d951969065e165db21578c159b3d362e0731b7095f1975b7cfd23e  screens/hearth.json",
+    "66124cc31b3780fb8ab949ba5972a01243b2e9e8a39ea90ff4c31171af2eb0b1  screens/interactive-setup.json",
+    "b721e391dfc587a735b35829867f48d469c69d082f6a9d6ddad288eeab9aed5a  screens/layouts.json",
+    "1d0bc4e6a8f68f6914bbdc95ed11b3ad3ac3027965073e045b54df00950ab5e5  screens/magicword.json",
+    "0db58e9204c2fac8e483e741ea8b3e640ea6515859a8d432f22867c18b716ee9  screens/map.json",
+    "225801e93dce8b6be65a727fe4202cf1f4604b064b9e68c07ba51daa08566ff0  screens/password.json",
+    "12d83b554d153063581fd5de5fc1b3a1189d01b1dd6c9bb3681b9f94a848e5d4  screens/retry.json",
+    "093995ff39138187a4bfd67934096cb89862812ca2ab3723651e71dd1d017604  screens/transfer-structure.json",
+    "8de95c7e2b784546270eb80a757ec7c4afcaad4c443c42f61a7a3ebe4cde2ff6  worlds.json",
+};
+
+#endif /* OD_IMPORT_CONTENT_MANIFEST_H */

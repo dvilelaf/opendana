@@ -1,0 +1,44 @@
+RELINK instructions - OpenDana, Windows ZIP
+=========================================================
+
+No component of this ZIP is LGPL. There is therefore no LGPL relink
+obligation: opendana.exe links the SDL2 DLL (Zlib), which is shared and
+substitutable, the Windows system DLLs, and parts of the MinGW-w64 runtime
+and of libgcc that the linker copies into both executables (see
+notices/mingw-w64-runtime.txt).
+
+Components
+----------
+- application          GPL-3.0-or-later   bin/opendana.exe
+- SDL2 2.32.10         Zlib               bin/SDL2.dll (shared)
+- SDL2-embedded        SunPro/BSD/MIT/Zlib/Apache-2.0 (compiled into SDL2.dll)
+- cJSON 1.7.18         MIT                (compiled into opendana.exe)
+- stb_image 2.30       MIT (alternative A) (compiled into opendana.exe)
+- stb_image_write 1.16 MIT (alternative A) (compiled into opendana.exe)
+- mingw-w64-runtime    ZPL-2.1 / public domain / Lucent / BSD-3-Clause,
+                       plus libgcc under the GCC Runtime Library Exception
+                       (statically linked into opendana.exe and SDL2.dll)
+
+The exact versions, source archives and their SHA-256 are in SOURCES.json.
+
+Rebuilding the application
+--------------------------
+sources/application.tar.xz is the complete corresponding source of opendana.exe:
+the `git archive` of the commit printed by `opendana.exe --version`. Cross-compile
+it from Linux with packaging/build-windows.sh (inside that archive), or with
+CMake and packaging/mingw-w64.cmake.
+
+Replacing SDL2
+--------------
+Overwrite bin\SDL2.dll with an ABI-compatible SDL2 2.x x86_64 DLL. No relink
+of opendana.exe is required.
+
+Rebuilding the shipped SDL2.dll
+-------------------------------
+The corresponding source is sources/SDL2.tar.xz (SDL2-2.32.10, git revision
+5d249570393f7a37e037abf22cd6012a4cc56a71). The recipe, the generated
+SDL_config.h and the flags are in sources/relink-materials.tar.xz.
+
+Modification and reverse engineering of the shipped components for debugging
+is permitted by the applicable licenses; no additional restriction is added
+by this bundle.

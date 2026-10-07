@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.example/schema/rom-data.schema.json",
+  "title": "EU boss sequences and magicword tables",
+  "type": "object",
+  "required": ["schema_version", "boss_idle", "boss_hit", "boss_defeat", "password_code", "password_glyph", "password_display"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "boss_idle": {"$ref": "#/$defs/bytes", "minItems": 50, "maxItems": 50},
+    "boss_hit": {"$ref": "#/$defs/bytes", "minItems": 11, "maxItems": 11},
+    "boss_defeat": {"$ref": "#/$defs/bytes", "minItems": 41, "maxItems": 41},
+    "password_code": {"type": "array", "minItems": 32, "maxItems": 32, "uniqueItems": true, "items": {"type": "integer", "minimum": 0, "maximum": 31}},
+    "password_glyph": {"$ref": "#/$defs/bytes", "minItems": 32, "maxItems": 32},
+    "password_display": {"type": "string", "minLength": 32, "maxLength": 32, "pattern": "^[!-~]{32}$", "description": "32 unique printable ASCII symbols; runtime additionally checks uniqueness."}
+  },
+  "$defs": {
+    "bytes": {"type": "array", "items": {"type": "integer", "minimum": 0, "maximum": 255}}
+  }
+}

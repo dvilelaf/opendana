@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "id": "test-1-1",
+  "name": "C2.1 test mod: our own ROUND 1-1 (level patch)",
+  "version": "2.0.0",
+  "levels": [
+    "levels/patch-1-1.json"
+  ]
+}

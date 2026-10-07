@@ -1,0 +1,2339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opendana.local/schema/screen.schema.json",
+  "title": "Interactive-screen artwork (screens/*.json)",
+  "description": "Static artwork of an interactive screen, in the package so a mod can replace it. The `id` selects the shape: `boss-arena` is the 256-cell ROUND 10-10 grid; `retry` is the TRY AGAIN / NEW GAME tile, palette and cursor. `map` is the WORLD map's sprite artwork and the castle overlay (its CIRAM cells and sprite groups). `hearth` is the illustration of the two menus (\"Where to begin from?\" and \"What next?\"): the sprite groups, the fire and the background bank swap. `castles` is the round-10 castle cinematic of worlds 1..9: per world the clip length, the first clip tick START can skip from and the script's sound requests on clip ticks. `magicword` is \"Today's magicword\", the `quit` of \"What next?\": the mode's palette, CHR banks and mask, the VRAM queue capacity, the VRAM record programs of the screen and of the \"Will you continue the game?\" question (records of count|flags, video address, bytes), the magicword's address, grouping and glyphs, the cursor sprite, the colour cycles and the good-night cinematic's cues, palette and loop. `layouts` is the static picture of the title, the \"Where to begin from?\" menu, its close and the WORLD map; their dynamic parts are logic. `password` is the magicword screen's message records (\"Enter your magicword.\" and \"Error! try again.\").",
+  "$defs": {
+    "v2_bytes": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 255
+      }
+    },
+    "v2_palette": {
+      "$ref": "#/$defs/v2_bytes",
+      "minItems": 32,
+      "maxItems": 32,
+      "items": {
+        "maximum": 63
+      }
+    },
+    "v2_record": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "type": "integer",
+          "oneOf": [
+            {
+              "minimum": 1,
+              "maximum": 59
+            },
+            {
+              "minimum": 129,
+              "maximum": 187
+            }
+          ]
+        },
+        {
+          "type": "integer",
+          "minimum": 8192,
+          "maximum": 12287
+        },
+        {
+          "$ref": "#/$defs/v2_bytes",
+          "minItems": 1,
+          "maxItems": 59
+        }
+      ]
+    },
+    "v2_records": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op",
+        "records"
+      ],
+      "properties": {
+        "op": {
+          "const": "records"
+        },
+        "records": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "$ref": "#/$defs/v2_record"
+          }
+        }
+      }
+    },
+    "v2_yield": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op"
+      ],
+      "properties": {
+        "op": {
+          "const": "yield"
+        }
+      }
+    },
+    "v2_word_command": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "op"
+      ],
+      "properties": {
+        "op": {
+          "const": "word"
+        }
+      }
+    },
+    "v2_map_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_index",
+        "chr_mode",
+        "background_banks",
+        "ciram"
+      ],
+      "properties": {
+        "scene_index": {
+          "type": "integer"
+        },
+        "chr_mode": {
+          "const": 0
+        },
+        "background_banks": {
+          "$ref": "#/$defs/v2_bytes",
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "ciram": {
+          "$ref": "#/$defs/v2_bytes",
+          "minItems": 2048,
+          "maxItems": 2048
+        }
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "rows",
+        "cols",
+        "cells"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "boss-arena"
+        },
+        "rows": {
+          "const": 16
+        },
+        "cols": {
+          "const": 16
+        },
+        "cells": {
+          "type": "array",
+          "minItems": 256,
+          "maxItems": 256,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "tiles",
+        "palette",
+        "cursor_tile",
+        "cursor_cols"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "retry"
+        },
+        "tiles": {
+          "type": "array",
+          "minItems": 96,
+          "maxItems": 96,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "palette": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
+        },
+        "cursor_tile": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "cursor_cols": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "worlds",
+        "panel",
+        "hero_poses",
+        "frame",
+        "digits",
+        "objects",
+        "castle_open",
+        "castle_overlay",
+        "castle_banks",
+        "frame_palette"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "map"
+        },
+        "worlds": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": [
+              "x",
+              "y"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "x": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "y": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            }
+          },
+          "description": "landmark of each world: the frame's centre and Hero in WORLD focus"
+        },
+        "panel": {
+          "type": "object",
+          "required": [
+            "x",
+            "y"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "x": {
+              "type": "array",
+              "minItems": 10,
+              "maxItems": 10,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            },
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          },
+          "description": "Hero's position on the panel for each round (ROUND focus)"
+        },
+        "hero_poses": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "array",
+            "minItems": 8,
+            "maxItems": 8,
+            "items": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            }
+          },
+          "description": "four poses of eight (tile, attr) sprites, stepped every eighth map frame"
+        },
+        "frame": {
+          "type": "object",
+          "required": [
+            "tile",
+            "attr"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "attr": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        "digits": {
+          "type": "object",
+          "required": [
+            "y",
+            "x"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        "objects": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "required": [
+              "y",
+              "x",
+              "frames"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "y": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "x": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "frames": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 8,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "duration",
+                    "sprites"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "duration": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 255
+                    },
+                    "sprites": {
+                      "type": "array",
+                      "maxItems": 16,
+                      "items": {
+                        "type": "array",
+                        "minItems": 4,
+                        "maxItems": 4,
+                        "items": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 255
+                        },
+                        "description": "(dy, tile, attr, dx), the record order of the artwork"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "castle_open": {
+          "type": "object",
+          "required": [
+            "y",
+            "x",
+            "sprites"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "sprites": {
+              "type": "array",
+              "maxItems": 16,
+              "items": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "description": "(dy, tile, attr, dx), the record order of the artwork"
+              }
+            }
+          }
+        },
+        "castle_overlay": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "prefixItems": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2047
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            ]
+          },
+          "description": "(CIRAM index, value) cells the castle map draws over the WORLD map layout"
+        },
+        "castle_banks": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "description": "background CHR banks of the castle map (the last one is set by the map script)"
+        },
+        "frame_palette": {
+          "type": "object",
+          "required": [
+            "entry",
+            "colors"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "entry": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 31
+            },
+            "colors": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              }
+            }
+          },
+          "description": "the landmark frame's colour cycle: one step every eighth frame"
+        },
+        "static": {
+          "type": "object",
+          "required": [
+            "palette",
+            "mask",
+            "bands",
+            "band_table",
+            "split_banks",
+            "sprite_banks"
+          ],
+          "additionalProperties": false,
+          "description": "the map's palette and PPU setup. The v1 document carried these words in layouts.json:map; the importer decodes them from the game data. Optional: a v1 package keeps using layouts.json:map.",
+          "properties": {
+            "palette": {
+              "type": "array",
+              "minItems": 32,
+              "maxItems": 32,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              },
+              "description": "PPU palette RAM (32 bytes: background sets, sprite sets and the frame colour)"
+            },
+            "mask": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255,
+              "description": "PPU mask word 2092"
+            },
+            "bands": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "PPU band count word 2093 (the map uses two: map above line 161, panel below)"
+            },
+            "band_table": {
+              "type": "array",
+              "minItems": 12,
+              "maxItems": 12,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 65535
+              },
+              "description": "two 6-word bands (display words 2094..2105): [y, scroll x, scroll y, nametable, bg bank, sprite bank]"
+            },
+            "split_banks": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8191
+              },
+              "description": "split tile banks (display words 2084..2087)"
+            },
+            "sprite_banks": {
+              "type": "array",
+              "minItems": 4,
+              "maxItems": 4,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8191
+              },
+              "description": "sprite tile banks (display words 2088..2091)"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "groups",
+        "groups_confirmed",
+        "fire",
+        "bank"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "hearth"
+        },
+        "groups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": [
+              "y",
+              "x",
+              "sprites"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "y": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "x": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "sprites": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "description": "(dy, tile, attr, dx) relative to the group/object origin"
+                }
+              }
+            }
+          },
+          "description": "sprite groups drawn by the menu loop"
+        },
+        "groups_confirmed": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "required": [
+              "y",
+              "x",
+              "sprites"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "y": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "x": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "sprites": {
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "type": "array",
+                  "minItems": 4,
+                  "maxItems": 4,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "description": "(dy, tile, attr, dx) relative to the group/object origin"
+                }
+              }
+            }
+          },
+          "description": "the sprite groups drawn in the 60-frame close after the A (two faces change)"
+        },
+        "fire": {
+          "type": "object",
+          "required": [
+            "y",
+            "x",
+            "frames"
+          ],
+          "additionalProperties": false,
+          "description": "the fire object: each frame is shown for its duration, then the next one",
+          "properties": {
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "frames": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "required": [
+                  "duration",
+                  "sprites"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "duration": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 255
+                  },
+                  "sprites": {
+                    "type": "array",
+                    "maxItems": 16,
+                    "items": {
+                      "type": "array",
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "description": "(dy, tile, attr, dx) relative to the group/object origin"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "bank": {
+          "type": "object",
+          "required": [
+            "slot",
+            "period",
+            "values"
+          ],
+          "additionalProperties": false,
+          "description": "every `period` frames the background bank register swaps between the two values",
+          "properties": {
+            "slot": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "period": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 255
+            },
+            "values": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              }
+            }
+          }
+        },
+        "queue_capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255,
+          "description": "a VRAM record enters the queue while its byte count plus the queue length stays below this"
+        },
+        "layouts": {
+          "type": "object",
+          "required": [
+            "begin",
+            "whatnext"
+          ],
+          "additionalProperties": false,
+          "description": "the menu panel's layouts: lists of VRAM records [count|flags, video address, bytes] for \"Where to begin from?\" and \"What next?\"",
+          "properties": {
+            "begin": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "minItems": 1,
+                    "maxItems": 63
+                  }
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16
+            },
+            "whatnext": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "minItems": 1,
+                    "maxItems": 63
+                  }
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          }
+        },
+        "screen": {
+          "type": "object",
+          "required": [
+            "palette",
+            "illustration",
+            "attributes",
+            "ppu"
+          ],
+          "additionalProperties": false,
+          "description": "the menu screen shown under its panel (\"What next?\"): the illustration (16 blocks of 4x4 tiles), its attribute block and the palettes (background and sprites); `ppu` are the screen's PPU state words (tile banks, mask, the y=128 split)",
+          "properties": {
+            "palette": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              },
+              "minItems": 32,
+              "maxItems": 32
+            },
+            "illustration": {
+              "type": "object",
+              "required": [
+                "x",
+                "y",
+                "rows"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "x": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 16
+                },
+                "y": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 14
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "minItems": 16,
+                    "maxItems": 16
+                  },
+                  "minItems": 16,
+                  "maxItems": 16
+                }
+              }
+            },
+            "attributes": {
+              "type": "object",
+              "required": [
+                "fill",
+                "x",
+                "y",
+                "rows"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "fill": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "x": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4
+                },
+                "y": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 4
+                },
+                "rows": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            },
+            "ppu": {
+              "type": "array",
+              "maxItems": 24,
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 2080,
+                    "maximum": 2381
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "worlds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "castles"
+        },
+        "source": {
+          "type": "string"
+        },
+        "worlds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 9,
+          "items": {
+            "type": "object",
+            "required": [
+              "world",
+              "duration",
+              "skip_from",
+              "cues"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "world": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "clip frames: the cinematic window plus the one frame before the level starts"
+              },
+              "skip_from": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "first clip tick from which START skips"
+              },
+              "cues": {
+                "type": "array",
+                "maxItems": 32,
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                },
+                "description": "[clip tick, request id]: the script's direct sound writes and queue requests, in order"
+              },
+              "frame_tick_lost": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "clip ticks whose frame the script's setup loses (the counter does not advance)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "`world-clears` is the end-of-world cinematic played when a round-10 clear completes world 1..9 for the first time, and the castle opening that follows world 9's: per clip the length, the first clip tick START can skip from (absent when the script never reads START), the clip ticks whose frame is lost and the script's sound requests. Clips 11..20 are the castle appearance of worlds 1..10: the first clear that fills a world's rounds 1..8 with round 9 or 10 done and its castle flag clear sets that flag and plays the cinematic; the map opens after its last frame.",
+      "required": [
+        "schema_version",
+        "id",
+        "clips"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "world-clears"
+        },
+        "source": {
+          "type": "string"
+        },
+        "clips": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "required": [
+              "clip",
+              "duration",
+              "cues"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "clip": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20
+              },
+              "duration": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 65535,
+                "description": "clip frames: the cinematic window plus the one frame after it"
+              },
+              "skip_from": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "first clip tick from which START skips (absent: not skippable)"
+              },
+              "cues": {
+                "type": "array",
+                "maxItems": 32,
+                "items": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  }
+                },
+                "description": "[clip tick, request id]: the script's direct sound writes and queue requests, in order"
+              },
+              "frame_tick_lost": {
+                "type": "array",
+                "maxItems": 4,
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "description": "clip ticks whose frame is lost (the counter does not advance)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "`magicword` is \"Today's magicword\", the `quit` of \"What next?\": the mode's palette, CHR banks and mask, the VRAM queue capacity, the VRAM record programs of the screen and of the \"Will you continue the game?\" question (records of count|flags, video address, bytes), the magicword's address, grouping and glyphs, the cursor sprite, the colour cycles and the good-night cinematic's cues, palette and loop.",
+      "required": [
+        "schema_version",
+        "id",
+        "palette",
+        "bg_banks",
+        "sprite_banks",
+        "mask",
+        "queue_capacity",
+        "program_start",
+        "palette_age",
+        "song",
+        "screen",
+        "question",
+        "word",
+        "cursor",
+        "cycle",
+        "night"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "magicword"
+        },
+        "source": {
+          "type": "string"
+        },
+        "palette": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "minItems": 32,
+          "maxItems": 32
+        },
+        "bg_banks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "sprite_banks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "mask": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "queue_capacity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 255
+        },
+        "program_start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "palette_age": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "song": {
+          "type": "object",
+          "required": [
+            "id",
+            "age"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "age": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            }
+          }
+        },
+        "screen": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "op"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "enum": [
+                  "records",
+                  "yield",
+                  "word"
+                ]
+              },
+              "records": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "minItems": 1,
+                      "maxItems": 63
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "maxItems": 32
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "question": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "op"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "enum": [
+                  "records",
+                  "yield",
+                  "word"
+                ]
+              },
+              "records": {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "prefixItems": [
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 65535
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 255
+                      },
+                      "minItems": 1,
+                      "maxItems": 63
+                    }
+                  ]
+                },
+                "minItems": 1,
+                "maxItems": 32
+              }
+            }
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "word": {
+          "type": "object",
+          "required": [
+            "address",
+            "count",
+            "group",
+            "gap_tile",
+            "glyphs"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "address": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "group": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 24
+            },
+            "gap_tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "glyphs": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 32,
+              "maxItems": 32
+            }
+          }
+        },
+        "cursor": {
+          "type": "object",
+          "required": [
+            "y",
+            "tile",
+            "attr",
+            "x"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "attr": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "cycle": {
+          "type": "object",
+          "required": [
+            "bg_mask",
+            "bg_entries",
+            "bg_tables",
+            "sprite_mask",
+            "sprite_entry",
+            "sprite_table"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "bg_mask": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "bg_entries": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "bg_tables": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "sprite_mask": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "sprite_entry": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 31
+            },
+            "sprite_table": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 5,
+              "maxItems": 5
+            }
+          }
+        },
+        "night": {
+          "type": "object",
+          "required": [
+            "duration",
+            "cues",
+            "palette",
+            "palette_tick",
+            "cycle"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "duration": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "cues": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "maxItems": 16
+            },
+            "palette": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 32,
+              "maxItems": 32
+            },
+            "palette_tick": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "cycle": {
+              "type": "object",
+              "required": [
+                "mask",
+                "entry",
+                "table"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "mask": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "entry": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 31
+                },
+                "table": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "Boss's arena background (screens/boss-background.json, loaded by od_arena_load): the two nametables (CIRAM), the room and base palettes, the CHR banks, the 16x16 arena grid, the brightness table and the attack tiles.",
+      "required": [
+        "schema_version",
+        "id",
+        "ciram",
+        "palette",
+        "banks",
+        "grid",
+        "base_palette",
+        "fade_lut",
+        "lower_banks",
+        "sprite_banks",
+        "attack_tiles"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "boss-background"
+        },
+        "ciram": {
+          "type": "array",
+          "minItems": 2048,
+          "maxItems": 2048,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "palette": {
+          "type": "array",
+          "minItems": 32,
+          "maxItems": 32,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
+        },
+        "banks": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          }
+        },
+        "grid": {
+          "type": "array",
+          "minItems": 256,
+          "maxItems": 256,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "base_palette": {
+          "type": "array",
+          "minItems": 32,
+          "maxItems": 32,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
+        },
+        "fade_lut": {
+          "type": "array",
+          "minItems": 64,
+          "maxItems": 64,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63
+          }
+        },
+        "lower_banks": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          }
+        },
+        "sprite_banks": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 127
+          }
+        },
+        "attack_tiles": {
+          "type": "array",
+          "minItems": 92,
+          "maxItems": 92,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          }
+        },
+        "chr_sha256": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mem_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "state_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "source",
+        "title",
+        "menu",
+        "menu_close",
+        "map"
+      ],
+      "additionalProperties": false,
+      "description": "`layouts`: the static pictures of the title, the \"Where to begin from?\" menu, its close and the WORLD map. What changes on these screens is logic in screens.c: the title's input loop and its colour cycle (palette `colour.entry`, indexed by a counter), the menu's fade-in, text and hearth, the close's hearth and fade-out.",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "layouts"
+        },
+        "source": {
+          "type": "string"
+        },
+        "title": {
+          "type": "object",
+          "required": [
+            "words",
+            "palettes",
+            "sprite_banks_before",
+            "sprite_banks_from",
+            "end",
+            "colour"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "words": {
+              "type": "array",
+              "description": "non-zero display words from 32 on: [field, value] (OD_SCENE_WORDS layout: 32..2079 nametables and attributes, 2080..2091 tile banks, 2092 mask, 2093..2123 split bands, 2124..2380 sprites, 2381 script flags)",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 32,
+                    "maximum": 2381
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                ]
+              }
+            },
+            "palettes": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 8,
+              "description": "palette keyframes of the title's setup, by clip tick",
+              "items": {
+                "type": "object",
+                "required": [
+                  "tick",
+                  "palette"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "tick": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 65535
+                  },
+                  "palette": {
+                    "type": "array",
+                    "minItems": 32,
+                    "maxItems": 32,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 63
+                    }
+                  }
+                }
+              }
+            },
+            "sprite_banks_before": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 8191
+              }
+            },
+            "sprite_banks_from": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 65535
+            },
+            "end": {
+              "type": "object",
+              "required": [
+                "tick",
+                "words"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "tick": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 65535
+                },
+                "words": {
+                  "type": "array",
+                  "maxItems": 8,
+                  "items": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 8191
+                    }
+                  }
+                }
+              }
+            },
+            "colour": {
+              "type": "object",
+              "required": [
+                "entry",
+                "table"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "entry": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 31
+                },
+                "table": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 8,
+                  "description": "colour table (raw bytes; the palette keeps the low six bits)",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 255
+                  }
+                }
+              }
+            }
+          }
+        },
+        "menu": {
+          "type": "object",
+          "required": [
+            "words",
+            "palette"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "words": {
+              "type": "array",
+              "description": "non-zero display words from 32 on: [field, value] (OD_SCENE_WORDS layout: 32..2079 nametables and attributes, 2080..2091 tile banks, 2092 mask, 2093..2123 split bands, 2124..2380 sprites, 2381 script flags)",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 32,
+                    "maximum": 2381
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                ]
+              }
+            },
+            "palette": {
+              "type": "array",
+              "minItems": 32,
+              "maxItems": 32,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              }
+            }
+          }
+        },
+        "menu_close": {
+          "type": "object",
+          "required": [
+            "words",
+            "palette",
+            "frames"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "words": {
+              "type": "array",
+              "description": "non-zero display words from 32 on: [field, value] (OD_SCENE_WORDS layout: 32..2079 nametables and attributes, 2080..2091 tile banks, 2092 mask, 2093..2123 split bands, 2124..2380 sprites, 2381 script flags)",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 32,
+                    "maximum": 2381
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                ]
+              }
+            },
+            "palette": {
+              "type": "array",
+              "minItems": 32,
+              "maxItems": 32,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              }
+            },
+            "frames": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "map": {
+          "type": "object",
+          "required": [
+            "words",
+            "palette"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "words": {
+              "type": "array",
+              "description": "non-zero display words from 32 on: [field, value] (OD_SCENE_WORDS layout: 32..2079 nametables and attributes, 2080..2091 tile banks, 2092 mask, 2093..2123 split bands, 2124..2380 sprites, 2381 script flags)",
+              "items": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "prefixItems": [
+                  {
+                    "type": "integer",
+                    "minimum": 32,
+                    "maximum": 2381
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 8191
+                  }
+                ]
+              }
+            },
+            "palette": {
+              "type": "array",
+              "minItems": 32,
+              "maxItems": 32,
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "id",
+        "prompt",
+        "error"
+      ],
+      "additionalProperties": false,
+      "description": "`password`: the magicword screen's message records (\"Enter your magicword.\" and \"Error! try again.\"), VRAM records [count|flags, video address, bytes] written over row 10 of the box",
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "id": {
+          "const": "password"
+        },
+        "prompt": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            {
+              "type": "integer",
+              "minimum": 8192,
+              "maximum": 9151
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 1,
+              "maxItems": 63
+            }
+          ]
+        },
+        "error": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            {
+              "type": "integer",
+              "minimum": 8192,
+              "maximum": 9151
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 255
+              },
+              "minItems": 1,
+              "maxItems": 63
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "`layouts` schema_version 2: the two static map bases the imported map scene draws, emitted by the importer. Same contract as schema/scene-extras.schema.json; the v1 timeline branch above is unchanged.",
+      "required": [
+        "schema_version",
+        "id",
+        "map_bases"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 2
+        },
+        "id": {
+          "const": "layouts"
+        },
+        "map_bases": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "allOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/v2_map_base"
+              }
+            }
+          ],
+          "prefixItems": [
+            {
+              "properties": {
+                "scene_index": {
+                  "const": 2
+                }
+              }
+            },
+            {
+              "properties": {
+                "scene_index": {
+                  "const": 43
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "object",
+      "description": "`magicword` schema_version 2: the static \"Today's magicword\" contract, emitted by src/import/extract_cinematics.c. Same contract as schema/scene-extras.schema.json; the v1 timeline branch above is unchanged.",
+      "required": [
+        "schema_version",
+        "id",
+        "palette_buffer",
+        "chr",
+        "song_request",
+        "screen",
+        "question",
+        "word",
+        "cursor",
+        "cycle",
+        "queue_capacity_bytes",
+        "post_goodnight"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 2
+        },
+        "id": {
+          "const": "magicword"
+        },
+        "palette_buffer": {
+          "$ref": "#/$defs/v2_palette"
+        },
+        "chr": {
+          "$ref": "#/$defs/v2_bytes",
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "song_request": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "queue_capacity_bytes": {
+          "const": 60
+        },
+        "screen": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [
+            {
+              "$ref": "#/$defs/v2_records"
+            },
+            {
+              "$ref": "#/$defs/v2_yield"
+            },
+            {
+              "$ref": "#/$defs/v2_records"
+            },
+            {
+              "$ref": "#/$defs/v2_yield"
+            },
+            {
+              "$ref": "#/$defs/v2_word_command"
+            }
+          ]
+        },
+        "question": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1,
+          "items": {
+            "$ref": "#/$defs/v2_records"
+          }
+        },
+        "word": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "address",
+            "count",
+            "group",
+            "gap_tile",
+            "glyphs"
+          ],
+          "properties": {
+            "address": {
+              "type": "integer",
+              "minimum": 8192,
+              "maximum": 12287
+            },
+            "count": {
+              "const": 26
+            },
+            "group": {
+              "const": 8
+            },
+            "gap_tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "glyphs": {
+              "$ref": "#/$defs/v2_bytes",
+              "minItems": 32,
+              "maxItems": 32
+            }
+          }
+        },
+        "cursor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "y",
+            "tile",
+            "attr",
+            "x"
+          ],
+          "properties": {
+            "y": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "tile": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "attr": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 255
+            },
+            "x": {
+              "$ref": "#/$defs/v2_bytes",
+              "minItems": 2,
+              "maxItems": 2
+            }
+          }
+        },
+        "cycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "bg_mask",
+            "bg_entries",
+            "bg_tables",
+            "sprite_mask",
+            "sprite_entry",
+            "sprite_table"
+          ],
+          "properties": {
+            "bg_mask": {
+              "const": 15
+            },
+            "bg_entries": {
+              "const": [
+                5,
+                6,
+                7
+              ]
+            },
+            "bg_tables": {
+              "type": "array",
+              "minItems": 3,
+              "maxItems": 3,
+              "items": {
+                "$ref": "#/$defs/v2_bytes",
+                "minItems": 3,
+                "maxItems": 3
+              }
+            },
+            "sprite_mask": {
+              "const": 7
+            },
+            "sprite_entry": {
+              "const": 19
+            },
+            "sprite_table": {
+              "$ref": "#/$defs/v2_bytes",
+              "minItems": 5,
+              "maxItems": 5
+            }
+          }
+        },
+        "post_goodnight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "palette_buffer",
+            "brightness_bg",
+            "brightness_sprite",
+            "cycle"
+          ],
+          "properties": {
+            "palette_buffer": {
+              "$ref": "#/$defs/v2_palette"
+            },
+            "brightness_bg": {
+              "const": 15
+            },
+            "brightness_sprite": {
+              "const": 15
+            },
+            "cycle": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "mask",
+                "entry",
+                "colours"
+              ],
+              "properties": {
+                "mask": {
+                  "const": 7
+                },
+                "entry": {
+                  "const": 3
+                },
+                "colours": {
+                  "$ref": "#/$defs/v2_bytes",
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=OpenDana
+Comment=Native, moddable re-implementation of a classic puzzle game
+Exec=opendana
+Icon=opendana
+Terminal=false
+Categories=Game;ActionGame;
