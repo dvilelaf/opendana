@@ -2593,7 +2593,7 @@ static void opts_from_options(od_flow_opts *fo, const options *o,
  * at. Only the dev binary exposes --video-demo. */
 static int run_video_demo(const options *o, const od_assets *assets)
 {
-    sdl_host h;
+    static sdl_host h;   /* C6.79: ~1.6 MiB, off the 2 MiB Windows stack; the memset below resets it */
     memset(&h, 0, sizeof h);
     h.o = o;
     h.ext_on = 1;
@@ -2726,7 +2726,7 @@ static int run_video_demo(const options *o, const od_assets *assets)
  * regain and check it resumes. The capture shows the paused banner. */
 static int run_focus_demo(const options *o, const od_assets *assets)
 {
-    sdl_host h;
+    static sdl_host h;   /* C6.79: ~1.6 MiB, off the 2 MiB Windows stack; the memset below resets it */
     memset(&h, 0, sizeof h);
     h.o = o;
     h.ext_on = 1;
@@ -2911,7 +2911,7 @@ static int run_first_run(options *o, const char *capture)
         return write_argb_png(capture, canvas);
     }
 
-    sdl_host h;
+    static sdl_host h;   /* C6.79: ~1.6 MiB, off the 2 MiB Windows stack; the memset below resets it */
     memset(&h, 0, sizeof(h));
     h.o = o;
     h.ext_on = 0;
@@ -3475,7 +3475,7 @@ int main(int argc, char **argv)
      * key handler the product's event loop uses, so it exercises ESC -> menu
      * and the Quit entry. */
     if (o.ui_demo) {
-        sdl_host h;
+        static sdl_host h;   /* C6.79: ~1.6 MiB, off the 2 MiB Windows stack; the memset below resets it */
         memset(&h, 0, sizeof h);
         h.o = &o;
         h.ext_on = 1;
@@ -3686,7 +3686,7 @@ int main(int argc, char **argv)
     /* A scripted replay is a fresh session from reset, EXCEPT when the user
      * explicitly asks to CONTINUE: R10 resumes on the map with the save. */
     fo.load_save = user_save && (!use_replay || o.continuing);
-    sdl_host h;
+    static sdl_host h;   /* C6.79: ~1.6 MiB, off the 2 MiB Windows stack; the memset below resets it */
     memset(&h, 0, sizeof h);
     h.o = &o;
     h.ext_on = ext_enabled();

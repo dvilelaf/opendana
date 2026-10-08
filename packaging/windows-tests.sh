@@ -40,7 +40,7 @@ step "configure + cross build (opendana_tests_public and the libraries)"
 cmake -S . -B "$BUILD" -DCMAKE_TOOLCHAIN_FILE=packaging/mingw-w64.cmake \
     -DCMAKE_BUILD_TYPE=Release -DOD_BUILD_TESTS=ON -DMINGW_PREFIX="$MINGW_PREFIX" \
     -DMINGW_SDL2_DIR="$SDL" -DSDL2_DIR="$SDL/lib/cmake/SDL2" -DOD_SDL2_DLL="$SDL/bin/SDL2.dll" >/dev/null
-cmake --build "$BUILD" -j"$(od_jobs)" --target opendana_tests_public
+cmake --build "$BUILD" -j"$(od_jobs)" --target opendana_tests_public opendana
 BUILD="$(cd "$BUILD" && pwd)"
 LIBS=("$BUILD/libopendana_ext.a" "$BUILD/libopendana_core.a")
 
@@ -52,6 +52,7 @@ cleanup() { wineserver -k 2>/dev/null || true; rm -rf "$work"; }
 trap cleanup EXIT
 cp "$SDL/bin/SDL2.dll" "$work/bin/"
 cp "$BUILD/opendana_tests_public.exe" "$work/bin/"
+cp "$BUILD/opendana.exe" "$work/bin/"
 
 sdl_flags=(-I"$SDL/include/SDL2" -DSDL_MAIN_HANDLED)
 cflags=(-std=c11 -Wall -Wextra -Werror -Werror=implicit-function-declaration -Iinclude)
@@ -177,6 +178,26 @@ elif build_gate picker-owner.exe "${cflags[@]}" -D_DEFAULT_SOURCE -Isrc/import t
     DISPLAY=":$(head -1 "$xdisp" | tr -d '[:space:]')" \
         gate "windows: ROM chooser owned by the game window, game loop runs, cancel" "$work/bin/picker-owner.exe"
     kill "$xvfb_pid" 2>/dev/null || true
+fi
+
+step "first run (C6.79): the product starts its first-run screen under wine64"
+# The screen's frame once lived on the stack (1.67 MiB of a 2 MiB reserve): the
+# exe died with a stack overflow, which the layout gate cannot see because it
+# does not run the binary. OD_WIN_FIRST_RUN_EXE points the gate at another exe (the
+# positive control: the exe of 6ca6547 must fail here).
+fr_exe="${OD_WIN_FIRST_RUN_EXE:-$work/bin/opendana.exe}"
+fr_t="$work/first-run"; mkdir -p "$fr_t/home" "$fr_t/local" "$fr_t/roaming" "$fr_t/tmp"
+gates=$((gates + 1)); fr_rc=0
+( cd "$fr_t" && HOME="$fr_t/home" USERPROFILE="Z:$fr_t/home" LOCALAPPDATA="Z:$fr_t/local" APPDATA="Z:$fr_t/roaming" \
+    TMPDIR="Z:$fr_t/tmp" TEMP="Z:$fr_t/tmp" SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+    timeout 120 "$wine64" "$fr_exe" --first-run-shot "Z:$fr_t/first-run.png" ) > "$fr_t/out.txt" 2>&1 || fr_rc=$?
+tr -d '\r' < "$fr_t/out.txt" | sed -n 1,5p
+fr_dim="$(od -An -tu1 -j16 -N8 "$fr_t/first-run.png" 2>/dev/null | tr -s ' ' | sed 's/^ //' || true)"
+# IHDR width/height as big-endian bytes: 0 0 1 0 (256) and 0 0 0 240.
+if [ "$fr_rc" -eq 0 ] && [ "$fr_dim" = "0 0 1 0 0 0 0 240" ]; then
+    summary+=("OK    windows: first-run screen captured by the exe (256x240 PNG, $(sha256sum < "$fr_t/first-run.png" | cut -c1-12))")
+else
+    fails=$((fails + 1)); summary+=("FAIL  windows: first-run screen (exit $fr_rc, PNG header '${fr_dim:-none}')")
 fi
 
 step "summary"
