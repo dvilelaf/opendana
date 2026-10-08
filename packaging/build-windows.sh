@@ -27,7 +27,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 cd "$OD_ROOT"
 
 BUILD="${BUILD_DIR_WIN:-build/win}"  # inside the ignored build/ tree
-DIST="${DIST_DIR_WIN:-build/dist-win}"
+DIST="$(od_abs "${DIST_DIR_WIN:-build/dist-win}")"
 MINGW_PREFIX="${MINGW_PREFIX:-x86_64-w64-mingw32}"
 # The MinGW-w64 runtime whose linked members notices/windows/mingw-w64-runtime.txt covers.
 MINGW_RUNTIME_EXPECTED="mingw-w64-x86-64-dev 8.0.0-1, gcc-mingw-w64-x86-64-win32 10.3.0-14ubuntu1+24.3"

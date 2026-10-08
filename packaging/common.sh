@@ -22,8 +22,11 @@ od_version() {
 
 OD_ROOT="$(od_repo_root)"
 OD_VERSION="$(od_version)"
-OD_BUILD_DIR="${BUILD_DIR:-build}"
-OD_DIST_DIR="${DIST_DIR:-$OD_BUILD_DIR/dist}"
+# Output folders are absolute (a relative BUILD_DIR/DIST_DIR is relative to the repository root, where
+# the build scripts run): the scripts `cd` into temporary folders before they publish.
+od_abs() { case "$1" in /*) printf '%s' "$1" ;; *) printf '%s/%s' "$OD_ROOT" "$1" ;; esac; }
+OD_BUILD_DIR="$(od_abs "${BUILD_DIR:-build}")"
+OD_DIST_DIR="$(od_abs "${DIST_DIR:-$OD_BUILD_DIR/dist}")"
 # shellcheck source=packaging/pins.sh
 source "$OD_ROOT/packaging/pins.sh"
 
