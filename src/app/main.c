@@ -1391,7 +1391,7 @@ static int sdl_renderer_init(void *ctx, int scale, int headless, int vsync)
     int r = od_renderer_init(&h->rend, scale, headless, vsync);
     if(r==0) {
         char mapping[1200];snprintf(mapping,sizeof mapping,"%s",h->settings_path);
-        char *slash=strrchr(mapping,'/');if(slash)snprintf(slash+1,sizeof mapping-(size_t)(slash+1-mapping),"gamecontrollerdb.txt");
+        char *slash=od_path_last_sep(mapping);if(slash)snprintf(slash+1,sizeof mapping-(size_t)(slash+1-mapping),"gamecontrollerdb.txt");
         else snprintf(mapping,sizeof mapping,"gamecontrollerdb.txt");
         od_pads_init(&h->pads,h->settings_path[0]?h->settings_path:NULL,mapping);
     }
@@ -1855,7 +1855,7 @@ static void host_screenshot(sdl_host *h)
 {
     char dir[1100];
     od_ucat_default_dir(dir, sizeof dir);              /* .../levels */
-    char *slash = strrchr(dir, '/');
+    char *slash = od_path_last_sep(dir);
     if (slash != NULL)
         *slash = '\0';
     else
@@ -2486,7 +2486,7 @@ static int sdl_screenshot(void *ctx, const od_flow *f, const od_index_frame *fb,
     char path[1200];
     const char *base_name = h->o->screenshot;
     const char *dot = strrchr(base_name,'.');
-    const char *slash = strrchr(base_name,'/');
+    const char *slash = od_path_last_sep(base_name);
     if (dot && slash && dot < slash) dot = NULL;
     size_t base = dot ? (size_t)(dot-base_name) : strlen(base_name);
     int n = snprintf(path,sizeof path,"%.*s_%05ld%s",(int)base,base_name,

@@ -8,6 +8,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 #define OD_GRID_W 16
 #define OD_GRID_H 15
@@ -46,6 +47,29 @@ static inline uint16_t od_rd16(const uint8_t *p)
 static inline uint32_t od_rd32(const uint8_t *p)
 {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+/* C6.81: path separators. '/' everywhere; on Windows also '\\', because the
+ * per-user folders come from %LOCALAPPDATA% (backslashes) and the paths a
+ * player types or the chooser returns use either. On POSIX a backslash is an
+ * ordinary file-name character, so it is not a separator there. */
+static inline int od_path_is_sep(char c)
+{
+#if defined(_WIN32)
+    return c == '/' || c == '\\';
+#else
+    return c == '/';
+#endif
+}
+
+/* The last separator of `p`, or NULL. */
+static inline char *od_path_last_sep(const char *p)
+{
+    char *last = NULL;
+    for (; *p != '\0'; p++)
+        if (od_path_is_sep(*p))
+            last = (char *)p;
+    return last;
 }
 
 #endif /* OD_COMMON_H */

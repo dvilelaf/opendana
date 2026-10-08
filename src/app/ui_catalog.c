@@ -80,11 +80,11 @@ void od_ucat_default_dir(char *out, size_t cap)
 {
     if (out == NULL || cap == 0)
         return;
-#ifndef _WIN32
-    /* C6.25: the per-user folder comes from the one helper (C6.31). */
+    /* C6.25: the per-user folder comes from the one helper (C6.31); C6.81: on
+     * Windows too (%LOCALAPPDATA%\opendana\levels), not a folder next to the
+     * working directory. */
     if (od_userdir_path(OD_USERDIR_DATA, "levels", out, cap) == OD_OK)
         return;
-#endif
     snprintf(out, cap, "levels");
 }
 
@@ -95,9 +95,9 @@ void od_ucat_default_io_path(const char *dir, char *out, size_t cap)
     char parent[1024];
     snprintf(parent, sizeof parent, "%s", dir != NULL ? dir : "levels");
     size_t n = strlen(parent);
-    while (n > 1 && parent[n - 1] == '/')
+    while (n > 1 && od_path_is_sep(parent[n - 1]))
         parent[--n] = '\0';
-    char *slash = strrchr(parent, '/');
+    char *slash = od_path_last_sep(parent);
     if (slash != NULL && slash != parent)
         *slash = '\0';
     else
@@ -229,7 +229,8 @@ static int path_in_catalog(const od_ui_catalog *c, const char *path)
 {
     size_t n = strlen(c->dir);
     return n > 0 && strncmp(path, c->dir, n) == 0 &&
-           (path[n] == '/' || path[n] == '\0') && strchr(path + n + 1, '/') == NULL;
+           (od_path_is_sep(path[n]) || path[n] == '\0') &&
+           (path[n] == '\0' || od_path_last_sep(path + n + 1) == NULL);
 }
 
 static void set_status(od_ui_catalog *c, int error, od_string fmt, const char *arg)
@@ -292,7 +293,7 @@ static void do_export(od_ui_catalog *c, const char *id)
     /* Create the (default) exports folder. */
     char folder[1400];
     snprintf(folder, sizeof folder, "%s", path);
-    char *slash = strrchr(folder, '/');
+    char *slash = od_path_last_sep(folder);
     if (slash != NULL && slash != folder) {
         *slash = '\0';
         (void)od_userdir_mkdir_p(folder);   /* UTF-8 on Windows (C6.36) */
