@@ -228,8 +228,11 @@ void od_ui_import_draw(const od_ui_import *st, uint32_t *canvas)
     int len = (int)strlen(shown);
     if (len > max_chars)
         snprintf(tail, sizeof tail, "...%s", shown + (len - (max_chars - 3)));
-    else
-        snprintf(tail, sizeof tail, "%s", shown);
+    else {
+        size_t n = (size_t)len < sizeof tail - 1 ? (size_t)len : sizeof tail - 1;
+        memcpy(tail, shown, n);
+        tail[n] = '\0';
+    }
     text_in(canvas, 16, by + 6, CANVAS_W - 32, tail, col, 1);
 
     /* Status: two lines, cut with "..." beyond that. */

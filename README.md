@@ -1,3 +1,5 @@
+<p align="center"><img src="packaging/icon/png/opendana-256.png" alt="OpenDana" width="128"></p>
+
 # OpenDana
 
 OpenDana is a native, moddable reimplementation of a classic NES puzzle game.
