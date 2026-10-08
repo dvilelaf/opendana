@@ -16,5 +16,13 @@ if [ -f "$b/CMakeCache.txt" ]; then
         exit 0
     fi
 fi
+if [ -f "$b/CMakeCache.txt" ]; then
+    # C6.70: a macOS build against a framework (-DOD_SDL2_FRAMEWORK=...)
+    fw="$(sed -n 's/^OD_SDL2_FRAMEWORK:PATH=//p' "$b/CMakeCache.txt")"
+    if [ -n "$fw" ] && [ -f "$fw/Headers/SDL.h" ]; then
+        echo "-I$fw/Headers -F$fw/.. -D_REENTRANT"
+        exit 0
+    fi
+fi
 echo "BLOCKED: no SDL2 headers (set SDL2_CONFIG or install sdl2-config)" >&2
 exit 2

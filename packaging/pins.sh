@@ -26,3 +26,10 @@ OD_PIN_WINDOWS_SDL2_SHA256=17134f9b04ba24041298e788025e30f02ebaebed392b4b39a1280
 # this hash. Changing the sources, the toolchain or the build script
 # changes it: re-run `build.sh --twice`, review the notices and update this line.
 OD_PIN_APPIMAGE_RUNTIME_SHA256=df23e6925ed82e34e3589d915bbef4e2a5c15253f61b571e7556dd625393ee66
+
+# macOS: libSDL2-2.0.0.dylib (universal x86_64+arm64, stripped, WITHOUT code signature),
+# built on the Tahoe VM from the same source tree by packaging/build-sdl2.sh --target macos
+# (Xcode 26.5 AppleClang). The package ships it ad hoc signed: signing adds a load command and
+# data in __LINKEDIT but leaves every section byte-identical (tests/macos-package.py compares
+# them), so this hash binds the shipped code although the shipped file's own hash differs.
+OD_PIN_MACOS_SDL2_SHA256=6b7102ce71827c187bfce5f89b73c1cf52b44ce445369969db630d3e6a223f75

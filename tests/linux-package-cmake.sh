@@ -15,7 +15,8 @@ work="$(mktemp -d "${TMPDIR:-/tmp}/opendana-cmake-test.XXXXXX")"
 trap 'rm -rf "$work"' EXIT
 fail() { echo "error: linux-package-cmake: $*" >&2; exit 1; }
 commit="$(git rev-parse HEAD)"
-mapfile -t paths < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' packaging/application-source.list)
+paths=()
+while IFS= read -r line; do paths+=("$line"); done < <(sed -e 's/#.*//' -e 's/[[:space:]]*$//' -e '/^$/d' packaging/application-source.list)
 git archive --format=tar --prefix=src/ HEAD -- "${paths[@]}" | tar -xf - -C "$work"
 configure() { cmake -S "$work/src" -B "$work/$1" -DOD_BUILD_APP=OFF "${@:2}" 2>&1; }
 out="$(configure b1)"
@@ -35,8 +36,8 @@ for opt in OD_PACKAGE_ASSETS OD_INSTALL_ASSETS; do
 done
 echo "OD_PACKAGE_ASSETS / OD_INSTALL_ASSETS refused"
 configure b4 -DOD_PACKAGE=ON > /dev/null
-[ ! -e "$work/b4/CPackConfig.cmake" ] || fail 'CPack still configured on Linux'
-echo "OD_PACKAGE=ON on Linux: no CPackConfig.cmake"
+[ ! -e "$work/b4/CPackConfig.cmake" ] || fail 'CPack still configured'
+echo "OD_PACKAGE=ON: no CPackConfig.cmake (any platform)"
 if cmake -S . -B "$work/b5" -DOD_BUILD_APP=OFF -DOD_BUILD_PRIVATE_TESTS=ON > "$work/b5.log" 2>&1; then
     fail 'OD_BUILD_PRIVATE_TESTS=ON accepted without a private view'
 fi

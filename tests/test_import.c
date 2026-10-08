@@ -14,6 +14,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+/* mkdtemp is POSIX; od_fs_mkdtemp is the portable one (same template rule). */
+#include "fsutil.h"
+#define mkdtemp(t) (od_fs_mkdtemp(t) == 0 ? (t) : NULL)
+#endif
+
 
 static int file_exists(const char *path)
 {

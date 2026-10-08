@@ -20,10 +20,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <windows.h>
+/* A hard link, as on POSIX (the old inode keeps the old bytes). */
+#define link(from, to) (CreateHardLinkA((to), (from), NULL) ? 0 : -1)
+#endif
 
 static void session_tmp(char *out, size_t cap, const char *name)
 {
     const char *dir = getenv("TMPDIR");
+#ifdef _WIN32
+    if (dir == NULL || dir[0] == '\0')
+        dir = getenv("TEMP");
+#endif
     if (dir == NULL || dir[0] == '\0')
         dir = "/tmp";
     snprintf(out, cap, "%s/opendana-c631-%ld-%s", dir, (long)getpid(), name);
@@ -149,6 +158,7 @@ static void test_session_save_backup(void)
     remove(bak);
 }
 
+#ifndef _WIN32   /* the Windows branch is tests/test_windows_userdir.c */
 static void test_session_userdir_xdg(void)
 {
     char *old_data = getenv("XDG_DATA_HOME"), *old_cfg = getenv("XDG_CONFIG_HOME");
@@ -159,6 +169,24 @@ static void test_session_userdir_xdg(void)
     if (old_home) snprintf(home, sizeof home, "%s", old_home);
 
     char out[1024];
+#if defined(__APPLE__)
+    /* C6.70: macOS keeps data and settings under ~/Library/Application Support and ignores
+     * XDG_*: with XDG set and unset the answers are the same. */
+    setenv("HOME", "/tmp/c631-home", 1);
+    setenv("XDG_DATA_HOME", "/tmp/c631-data", 1);
+    setenv("XDG_CONFIG_HOME", "/tmp/c631-cfg", 1);
+    CHECK_EQ_U32(od_userdir(OD_USERDIR_DATA, out, sizeof out), OD_OK);
+    CHECK(strcmp(out, "/tmp/c631-home/Library/Application Support/" OD_USERDIR_APP) == 0);
+    CHECK_EQ_U32(od_userdir_path(OD_USERDIR_CONFIG, "settings.ini", out, sizeof out), OD_OK);
+    CHECK(strcmp(out, "/tmp/c631-home/Library/Application Support/" OD_USERDIR_APP "/settings.ini") == 0);
+
+    unsetenv("XDG_DATA_HOME");
+    unsetenv("XDG_CONFIG_HOME");
+    CHECK_EQ_U32(od_userdir_path(OD_USERDIR_DATA, "states/slot-1.odstate", out, sizeof out), OD_OK);
+    CHECK(strcmp(out, "/tmp/c631-home/Library/Application Support/" OD_USERDIR_APP "/states/slot-1.odstate") == 0);
+    CHECK_EQ_U32(od_userdir(OD_USERDIR_CONFIG, out, sizeof out), OD_OK);
+    CHECK(strcmp(out, "/tmp/c631-home/Library/Application Support/" OD_USERDIR_APP) == 0);
+#else
     setenv("XDG_DATA_HOME", "/tmp/c631-data", 1);
     setenv("XDG_CONFIG_HOME", "/tmp/c631-cfg", 1);
     CHECK_EQ_U32(od_userdir(OD_USERDIR_DATA, out, sizeof out), OD_OK);
@@ -173,6 +201,7 @@ static void test_session_userdir_xdg(void)
     CHECK(strcmp(out, "/tmp/c631-home/.local/share/" OD_USERDIR_APP "/states/slot-1.odstate") == 0);
     CHECK_EQ_U32(od_userdir(OD_USERDIR_CONFIG, out, sizeof out), OD_OK);
     CHECK(strcmp(out, "/tmp/c631-home/.config/" OD_USERDIR_APP) == 0);
+#endif
 
     /* No per-user base at all: an error, never the current directory. */
     unsetenv("HOME");
@@ -186,6 +215,7 @@ static void test_session_userdir_xdg(void)
     if (cfg[0]) setenv("XDG_CONFIG_HOME", cfg, 1); else unsetenv("XDG_CONFIG_HOME");
     if (home[0]) setenv("HOME", home, 1); else unsetenv("HOME");
 }
+#endif
 
 #endif /* SESSION_BASE_CONTROL */
 
@@ -193,5 +223,7 @@ OD_TEST(test_session_save_atomic_replace)
 OD_TEST(test_session_save_keeps_invalid)
 #ifndef SESSION_BASE_CONTROL
 OD_TEST(test_session_save_backup)
+#ifndef _WIN32
 OD_TEST(test_session_userdir_xdg)
+#endif
 #endif

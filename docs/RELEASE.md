@@ -2,7 +2,7 @@
 
 How the Linux (TAR, AppImage) and Windows (ZIP) packages are built, checked and
 published. The version comes from `CMakeLists.txt` (`project(... VERSION x.y.z)`).
-macOS is not supported and its script is not maintained.
+macOS: section 7 (universal `.dmg`, ad hoc signed, built on a macOS host).
 
 Every package is built from a **source archive of one git commit**, so the
 binary, its source and the commit it prints (`opendana --version`) always
@@ -171,9 +171,49 @@ the image, imports your own game file read in place and plays 600 frames headles
   says so.
 - The auditor checks bytes, versions and the presence of notices; it does not
   certify legal compliance.
-- macOS is out of scope.
+- macOS: the arm64 slice is built but not run (it needs an Apple Silicon Mac); see section 7.
 - The zstd source in the AppImage licence bundle and runtime source archive omits `tests/`
   (links and compressed test inputs the archive gate and the auditor cannot accept) and has
   `build/` renamed `build-files/`; `lib/`, the only part compiled, is untouched. Alpine's
   patches to musl 1.2.5-r11 are not reproduced; the upstream 1.2.5 tarball is shipped as the
   reference (MIT).
+
+## 7. macOS (C6.70)
+
+The macOS package is `opendana-X.Y.Z-macOS-universal.dmg`: `OpenDana.app` with the same
+x86_64 + arm64 binary slices, the SDL2 shared library built from the SAME pinned source as the
+Linux and Windows ones, the licence bundle and the corresponding sources inside the app, ad hoc
+code signed (`codesign -s -`, not notarized: right click, Open, the first time).
+
+How the pieces are made (the maintainers' driver does all of this on a macOS build host and is not
+part of this tree, because it names that host):
+
+1. `packaging/make-sources.sh --commit <sha> --platform macos --out DIR` makes the corresponding
+   sources (`git archive` of the commit, ROM audit of the source, `SDL2.tar.xz`, notices/macos,
+   relink/macos). The app is built FROM that source archive, never from the working tree.
+2. On macOS (Xcode, CMake 3.30):
+   `bash packaging/build-sdl2.sh --target macos --source-archive SDL2.tar.xz` builds
+   `libSDL2-2.0.0.dylib` (universal, stripped, unsigned) and checks it against
+   `OD_PIN_MACOS_SDL2_SHA256` in `packaging/pins.sh` (two clean builds give the same bytes);
+   then
+   `cmake -S <source archive> -B build -DCMAKE_BUILD_TYPE=Release -DOD_PACKAGE=ON -DOD_BUILD_TESTS=OFF
+   "-DCMAKE_OSX_ARCHITECTURES=x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+   -DSDL2_DIR=<sdl2 prefix>/lib/cmake/SDL2` and `cmake --install build --component Runtime --strip`.
+3. `packaging/write-manifest.sh --platform macos` and `packaging/license-bundle.sh --mode macos` bind
+   the UNSIGNED binaries to the sources; the bundle goes to `Contents/Resources/doc/license-bundle`.
+4. The app is assembled (`Contents/MacOS/opendana`, `Contents/Frameworks/libSDL2-2.0.0.dylib`,
+   the fonts and icon the first-run screen loads under `Contents/share/opendana`, `opendana.icns`),
+   signed ad hoc, and `hdiutil create -format UDZO` makes the `.dmg`.
+5. `python3 tests/macos-package.py OpenDana.app <sha> <sdl2 pin>` checks the closed inventory, the
+   universal Mach-O files, the run path and the bundle; `tests/macos-package-controls.py` is its
+   positive and negative control (level 1). The ROM auditor and the leak scan run over the contents
+   of the mounted `.dmg`.
+
+Level 1 runs on macOS too (`tests/run.sh --unit` with a build dir that has the SDL2 above): the
+tests that expect XDG folders expect `~/Library/Application Support` there, the three `--wrap`
+tests rename the wrapped function at compile time (ld64 has no `--wrap`), and two checks are
+Linux-only and say so: the freedesktop launcher (macOS answers "Not supported" and writes nothing)
+and the SIGKILL case of the ROM chooser (macOS has no PDEATHSIG).
+
+Not covered: the arm64 slice is built but needs an Apple Silicon Mac to be run; the `.dmg` file
+itself is not byte-reproducible (hdiutil stamps it), its contents are.

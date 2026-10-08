@@ -65,9 +65,14 @@ static int mtime_cmp(const char *rel_a, const char *rel_b)   /* >0: a newer than
     snprintf(a, sizeof a, "%s/%.200s", data, rel_a);
     snprintf(b, sizeof b, "%s/%.200s", data, rel_b);
     if (stat(a, &sa) != 0 || stat(b, &sb) != 0) return -2;
-    if (sa.st_mtim.tv_sec != sb.st_mtim.tv_sec)
-        return sa.st_mtim.tv_sec > sb.st_mtim.tv_sec ? 1 : -1;
-    return (sa.st_mtim.tv_nsec > sb.st_mtim.tv_nsec) - (sa.st_mtim.tv_nsec < sb.st_mtim.tv_nsec);
+#if defined(__APPLE__)
+#define ST_MTIME(s) ((s).st_mtimespec)   /* C6.70: Darwin names the timestamp differently */
+#else
+#define ST_MTIME(s) ((s).st_mtim)
+#endif
+    if (ST_MTIME(sa).tv_sec != ST_MTIME(sb).tv_sec)
+        return ST_MTIME(sa).tv_sec > ST_MTIME(sb).tv_sec ? 1 : -1;
+    return (ST_MTIME(sa).tv_nsec > ST_MTIME(sb).tv_nsec) - (ST_MTIME(sa).tv_nsec < ST_MTIME(sb).tv_nsec);
 }
 
 static int cache_mentions(const char *name)
@@ -155,6 +160,23 @@ int main(int argc, char **argv)
     od_desktop_cfg cfg = { data, "/opt/open hero/Open$Player \"x\".AppImage", src };
     static const int sizes[] = {16, 24, 32, 48, 64, 128, 256, 512};
 
+#if !defined(__linux__)
+    /* C6.70: the freedesktop launcher is Linux only (desktop_integration.h). Elsewhere (macOS
+     * has its own .app bundle and dock) the module must say so, touch nothing and never
+     * pretend: this replaces the Linux checks below on those systems. */
+    EXPECT(od_desktop_supported() == 0, "not supported outside Linux");
+    fresh();
+    EXPECT(!od_desktop_packaged(&cfg), "never offered as packaged");
+    EXPECT(!od_desktop_installed(&cfg), "never installed");
+    EXPECT(od_desktop_install(&cfg, msg, sizeof msg) == OD_DESKTOP_UNSUPPORTED, "install: %s", msg);
+    EXPECT(strcmp(msg, "Not supported on this system") == 0, "install message: %s", msg);
+    EXPECT(od_desktop_uninstall(&cfg, msg, sizeof msg) == OD_DESKTOP_UNSUPPORTED, "uninstall: %s", msg);
+    EXPECT(strcmp(msg, "Not supported on this system") == 0, "uninstall message: %s", msg);
+    EXPECT(!exists("applications") && !exists("icons"), "nothing written");
+    (void)sizes;
+    printf(failures ? "desktop-integration: %d FAILURE(S)\n" : "desktop-integration: not supported here, answered as such (Linux checks skipped)\n", failures);
+    return failures ? 1 : 0;
+#endif
     EXPECT(od_desktop_supported() == 1, "supported on Linux");
 
     /* Nothing is written until asked. */

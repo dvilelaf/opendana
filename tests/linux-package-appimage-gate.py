@@ -54,7 +54,7 @@ def digest(data):
 
 def main():
     with tempfile.TemporaryDirectory(prefix='opendana-appimage-gate.') as tmp:
-        root = Path(tmp)
+        root = Path(tmp).resolve()   # C6.70: macOS TMPDIR is under /var, a symlink the gate rejects
 
         def file(name, data):
             (root / name).write_bytes(data)

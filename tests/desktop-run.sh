@@ -31,7 +31,10 @@ cp packaging/icon/opendana.svg "$hi/scalable/apps/opendana.svg"
 # OD_DESKTOP_SRC=DIR builds the module of another tree (positive control: the
 # icon-cache checks must FAIL on 8f71512, before the icon-theme.cache fix).
 msrc="${OD_DESKTOP_SRC:-.}"
-cc -std=c11 -Wall -Wextra -Werror -I"$msrc/src/app" tests/desktop-integration.c "$msrc/src/app/desktop_integration.c" -o "$out/unit"
+# shellcheck source=tests/portable.sh
+. tests/portable.sh
+# shellcheck disable=SC2086
+cc -std=c11 -Wall -Wextra -Werror $od_plat_cflags -I"$msrc/src/app" tests/desktop-integration.c "$msrc/src/app/desktop_integration.c" -o "$out/unit"
 if [ -n "${OD_DESKTOP_SRC:-}" ]; then
     if "$out/unit" "$hi" "$out/work"; then echo "desktop: positive control PASSED on $msrc (the test is blind)"; exit 1; fi
     echo "desktop: positive control failed on $msrc, as expected"; exit 0

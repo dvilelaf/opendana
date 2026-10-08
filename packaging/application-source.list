@@ -18,7 +18,7 @@ schema
 src
 assets/fonts
 packaging
-# C6.51: macOS is out of scope and its scripts name a private host, a VM and a
+# C6.70: the macOS driver scripts name a private host, a VM and a
 # person; they stay out of the corresponding source (the private lab keeps them).
 :(exclude)packaging/build-macos.sh
 :(exclude)packaging/macos-remote-build.sh

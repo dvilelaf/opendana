@@ -139,30 +139,46 @@ static void test_settings_gain_case(void)
     CHECK_EQ_U32(one[0], 1234);
 }
 
+#ifndef _WIN32   /* the Windows branch is tests/test_windows_userdir.c */
 static void test_settings_xdg_path_case(void)
 {
     static char env[] = "XDG_CONFIG_HOME=/tmp/opendana-c51-xdg";
     putenv(env);
     char path[512];
+    static char home_env[] = "HOME=/tmp/opendana-c51-home";
+    putenv(home_env);
+#if defined(__APPLE__)
+    /* C6.70: on macOS settings live under ~/Library/Application Support whatever XDG says. */
+    od_settings_default_path(path, sizeof path);
+    CHECK(strcmp(path, "/tmp/opendana-c51-home/Library/Application Support/" OD_SETTINGS_APP_DIR
+                      "/settings.ini") == 0);
+    static char empty_xdg[] = "XDG_CONFIG_HOME=";
+    putenv(empty_xdg);
+    od_settings_default_path(path, sizeof path);
+    CHECK(strcmp(path, "/tmp/opendana-c51-home/Library/Application Support/" OD_SETTINGS_APP_DIR
+                      "/settings.ini") == 0);
+#else
     od_settings_default_path(path, sizeof path);
     CHECK(strcmp(path, "/tmp/opendana-c51-xdg/" OD_SETTINGS_APP_DIR "/settings.ini") == 0);
 
     /* Without XDG_CONFIG_HOME the path falls back to $HOME/.config. */
-    static char home_env[] = "HOME=/tmp/opendana-c51-home";
     static char empty_xdg[] = "XDG_CONFIG_HOME=";
     putenv(empty_xdg);
-    putenv(home_env);
     od_settings_default_path(path, sizeof path);
     CHECK(strcmp(path, "/tmp/opendana-c51-home/.config/" OD_SETTINGS_APP_DIR
                       "/settings.ini") == 0);
+#endif
 
     /* Restore a harmless XDG setting for any later case. */
     putenv((char *)"XDG_CONFIG_HOME=/tmp/opendana-c51-xdg");
 }
+#endif
 
 OD_TEST(test_settings_defaults_case)
 OD_TEST(test_settings_parse_case)
 OD_TEST(test_settings_invalid_case)
 OD_TEST(test_settings_roundtrip_case)
 OD_TEST(test_settings_gain_case)
+#ifndef _WIN32
 OD_TEST(test_settings_xdg_path_case)
+#endif

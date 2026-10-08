@@ -51,6 +51,12 @@ if(OD_IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS" OR IOS)
   set(OD_TARGET_IOS TRUE)
 endif()
 
+if(APPLE)
+  # C6.70: the sources ask for POSIX 2008 (_POSIX_C_SOURCE) and Darwin then hides st_mtimespec,
+  # O_NOFOLLOW and mkdtemp unless this is defined as well.
+  add_compile_definitions(_DARWIN_C_SOURCE)
+endif()
+
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
@@ -191,12 +197,20 @@ if(OD_BUILD_APP)
   if(OD_TARGET_EMSCRIPTEN)
     set(OD_SDL_AVAILABLE TRUE)
   elseif(APPLE AND OD_SDL2_FRAMEWORK)
-    # C5.11: link the official SDL2.framework directly (no CMake config ships
-    # inside the .framework). The .app puts it under Contents/Frameworks, which
+    # C5.11: link an SDL2.framework directly (-DOD_SDL2_FRAMEWORK=<path>), without going
+    # through the CMake package that the official framework also carries. The .app puts it under Contents/Frameworks, which
     # the packaged binary reaches through `@executable_path/../Frameworks`.
     set(SDL2_FOUND TRUE)
     set(SDL2_INCLUDE_DIRS "${OD_SDL2_FRAMEWORK}/Headers")
-    set(SDL2_LIBRARIES "-F${OD_SDL2_FRAMEWORK}/.." "-framework" "SDL2")
+    # C6.70: a .framework path is a library CMake links with -framework (the old
+    # "-framework" "SDL2" list became -lSDL2) and this branch never marked SDL available,
+    # so the front end was not built from it.
+    set(SDL2_LIBRARIES "${OD_SDL2_FRAMEWORK}")
+    set(OD_SDL_INCLUDE_DIRS ${SDL2_INCLUDE_DIRS})
+    set(OD_SDL_LIBRARIES ${SDL2_LIBRARIES})
+    set(OD_SDL_AVAILABLE TRUE)
+    # The framework's own headers include <SDL2/...>: -F makes that spelling resolve.
+    add_compile_options("-F${OD_SDL2_FRAMEWORK}/..")
   else()
     find_package(SDL2 CONFIG QUIET)
     if(NOT SDL2_FOUND)
@@ -310,7 +324,7 @@ if(OD_BUILD_APP AND OD_SDL_AVAILABLE)
   target_compile_definitions(opendana PRIVATE OD_VERSION="${OD_VERSION_STRING}")
   if(WIN32)
     # C6.21: the first-run ROM picker uses the Win32 common file dialog.
-    target_link_libraries(opendana PRIVATE comdlg32)
+    target_link_libraries(opendana PRIVATE comdlg32 ole32)
   endif()
 
   # C5.11 packaging: the installed binary finds the bundled SDL2 through a
@@ -344,7 +358,7 @@ if(OD_BUILD_APP AND OD_SDL_AVAILABLE)
                                OD_DEV_TOOLS=1)
     if(WIN32)
       # C6.21: the first-run ROM picker uses the Win32 common file dialog.
-      target_link_libraries(opendana-dev PRIVATE comdlg32)
+      target_link_libraries(opendana-dev PRIVATE comdlg32 ole32)
     endif()
   endif()
 
@@ -474,24 +488,8 @@ if(NOT OD_TARGET_EMSCRIPTEN)
 endif()
 
 # ---------------------------------------------------------------------------
-# CPack. C6.30 retired the Linux TGZ and the Windows ZIP generators: they
-# produced the published file names without the licence gate or the ROM
-# auditor. Linux and Windows packages come only from packaging/build-linux.sh
-# and packaging/build-windows.sh. Only the (out of scope, unmaintained) macOS
-# DragNDrop path still configures CPack.
+# CPack. C6.30 retired the Linux TGZ and the Windows ZIP generators and C6.70 the macOS
+# DragNDrop one: they produced the published file names without the licence gate or the ROM
+# auditor. The packages come only from packaging/build-linux.sh, packaging/build-windows.sh
+# and the macOS driver (OpenDana.app + .dmg made with hdiutil).
 # ---------------------------------------------------------------------------
-if(OD_PACKAGE AND APPLE)
-  set(CPACK_PACKAGE_NAME "opendana")
-  set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-  set(CPACK_PACKAGE_VENDOR "OpenDana")
-  set(CPACK_PACKAGE_CONTACT "OpenDana")
-  set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
-      "Native, moddable re-implementation of a classic puzzle game")
-  set(CPACK_PACKAGE_INSTALL_DIRECTORY "OpenDana")
-  set(CPACK_COMPONENTS_ALL Runtime)
-  set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
-  set(CPACK_GENERATOR "DragNDrop")
-  set(CPACK_PACKAGE_FILE_NAME "opendana-${PROJECT_VERSION}-macOS-universal")
-  set(CPACK_DMG_VOLUME_NAME "OpenDana")
-  include(CPack)
-endif()

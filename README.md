@@ -1,8 +1,9 @@
 # OpenDana
 
 OpenDana is a native, moddable reimplementation of a classic NES puzzle game.
-It is written in C11 with a deterministic core, runs on Linux and Windows, and
-adds a built-in level editor, save states, gamepad support and a mod system.
+It is written in C11 with a deterministic core, runs on Linux, Windows and
+macOS, and adds a built-in level editor, save states, gamepad support and a mod
+system.
 
 OpenDana does not include the game. It needs **your own copy of the European
 ROM**, which it imports once (see [Requirements / legal](#requirements--legal)).
@@ -31,8 +32,9 @@ To play you need a legally obtained copy of the ROM of the European release of
 853646c50889dfb7a74c2acf7cf3b76f42d044745433f706dca33f47d826cd1d
 ```
 
-Check yours with `sha256sum FILE` (Linux) or `certutil -hashfile FILE SHA256`
-(Windows). Any other file is refused without changing anything.
+Check yours with `sha256sum FILE` (Linux), `shasum -a 256 FILE` (macOS) or
+`certutil -hashfile FILE SHA256` (Windows). Any other file is refused without
+changing anything.
 
 ## Install
 
@@ -43,10 +45,14 @@ Download a release and pick one:
 | Linux **TAR** (`opendana-X.Y.Z-Linux-x86_64.tar.gz`) | unpack it anywhere and run `bin/opendana`; keep `bin/` and `lib/` together |
 | Linux **AppImage** | `chmod +x` the file and run it |
 | Windows **ZIP** (`opendana-X.Y.Z-Windows-x86_64.zip`) | unpack it anywhere and run `bin\opendana.exe`; keep `SDL2.dll` next to it |
+| macOS **DMG** (`opendana-X.Y.Z-macOS-universal.dmg`) | open it and drag `OpenDana.app` to Applications; the first time, **right click it and choose Open**, because the app is signed ad hoc and is not notarized by Apple |
 
-All packages are for 64-bit x86. Each one carries the licence, the third-party
-notices and the corresponding source code. Verify a download with
-`sha256sum -c SHA256SUMS`. `opendana --version` prints the version and the
+The Linux and Windows packages are for 64-bit x86. The macOS disk image is
+universal: the app holds an x86_64 and an arm64 build. The arm64 half is
+compiled but has not been run on Apple Silicon, so it is untested. Each package
+carries the licence, the third-party notices and the corresponding source code.
+Verify a download with `sha256sum -c SHA256SUMS` (on macOS,
+`shasum -a 256 -c SHA256SUMS`). `opendana --version` prints the version and the
 commit it was built from.
 
 ## First run: import your ROM
@@ -70,11 +76,11 @@ asks you to import again.
 
 Where things are stored:
 
-| | Linux | Windows |
-|---|---|---|
-| imported content | `$XDG_DATA_HOME/opendana/content/base` (default `~/.local/share/opendana/...`) | `%LOCALAPPDATA%\opendana\content\base` |
-| saves, states, screenshots | `$XDG_DATA_HOME/opendana/` | `%LOCALAPPDATA%\opendana\` |
-| settings (`settings.ini`) | `$XDG_CONFIG_HOME/opendana/` (default `~/.config/...`) | `%APPDATA%\opendana\` |
+| | Linux | Windows | macOS |
+|---|---|---|---|
+| imported content | `$XDG_DATA_HOME/opendana/content/base` (default `~/.local/share/opendana/...`) | `%LOCALAPPDATA%\opendana\content\base` | `~/Library/Application Support/opendana/content/base` |
+| saves, states, screenshots | `$XDG_DATA_HOME/opendana/` | `%LOCALAPPDATA%\opendana\` | `~/Library/Application Support/opendana/` |
+| settings (`settings.ini`) | `$XDG_CONFIG_HOME/opendana/` (default `~/.config/...`) | `%APPDATA%\opendana\` | `~/Library/Application Support/opendana/` |
 
 `--content DIR`, `--save FILE` and `--settings FILE` use other locations.
 
@@ -142,6 +148,10 @@ You need a C11 compiler, CMake 3.16 or later and the SDL2 development files
 bash build.sh                       # build/opendana
 SDL2_DIR=/path/to/sdl2 bash build.sh   # use an SDL2 installed elsewhere
 ```
+
+This is the same on Linux and macOS (on macOS, point `SDL2_DIR` at an installed
+SDL2 prefix, or configure with CMake and pass `-DOD_SDL2_FRAMEWORK=/path/to/SDL2.framework`
+to link a framework). On Windows the packages are cross-compiled with MinGW-w64.
 
 This also builds `build/libopendana_core.a` (the core, no SDL) and the unit test
 runner. To check your clone:

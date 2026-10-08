@@ -35,7 +35,7 @@ def digest(data):
 
 def main():
     with tempfile.TemporaryDirectory(prefix='opendana-license-bundle-test.') as tmp:
-        root = Path(tmp)
+        root = Path(tmp).resolve()   # C6.70: macOS TMPDIR is under /var, a symlink the gate rejects
 
         def file(name, data):
             (root / name).write_bytes(data)
@@ -117,6 +117,7 @@ def main():
         # Positive controls.
         run(manifest, True)
         run(windows, True, mode='windows')
+        run(manifest, True, mode='macos')          # C6.70: the macOS set is the TAR set
         run(manifest, True, output='bundle-tar')
         bundle = root / 'bundle-tar'
         names = sorted(p.relative_to(bundle).as_posix() for p in bundle.rglob('*') if p.is_file())
@@ -131,6 +132,10 @@ def main():
         run(windows, True, mode='windows', output='bundle-win')
         win_sources = json.loads((root / 'bundle-win/SOURCES.json').read_text())
         assert next(c for c in win_sources['components'] if c['name'] == 'mingw-w64-runtime')['source'] is None
+
+        run(manifest, True, mode='macos', output='bundle-mac')
+        mac_readme = (root / 'bundle-mac/README.txt').read_text()
+        assert 'Contents/Frameworks/libSDL2-2.0.0.dylib' in mac_readme and 'libSDL2-2.0.so.0' not in mac_readme
 
         # Named mismatches (PUB-19).
         bad = copy.deepcopy(manifest); bad['components'][3]['notice']['sha256'] = '0' * 64

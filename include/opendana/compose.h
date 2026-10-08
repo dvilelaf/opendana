@@ -42,6 +42,12 @@ typedef struct {
      * line (y + scroll_y) % 240). Only auto-scrolling rounds set it
      * (od_game.scroll_y); the HUD band is drawn over it afterwards. */
     unsigned scroll_y;
+    /* Auto-scrolling rounds show a strip of lava tiles (the fire bank's tiles 4..7,
+     * four wide, palette 0) on lines 208..215, scrolled sideways: `lava_base` is the
+     * first tile of the strip in the tile set and `lava_x` its horizontal phase. */
+    unsigned lava_on;
+    unsigned lava_base;
+    unsigned lava_x;
 } od_presentation;
 
 /* --- Sprites and animation tables (C2.2) ---------------------------------
@@ -185,11 +191,29 @@ typedef struct {
      * with, 0xFF outside the field. */
     struct { uint8_t cell, type, left, right; } magic[3];
     unsigned magic_count;
+    /* The boss room's background column writes. A cell write (the attack's, or the drain of an
+     * effect) also rewrites the facing column of each horizontal neighbour from the grid as it is
+     * at that moment, and the background keeps what was written until another write covers the
+     * column (the last write wins). `colw` is that log, oldest first: column `side` (0 left, 1
+     * right) of `cell` drawn as `type` beside `nb`, written by the write of cell `src`.
+     * Only these two writers are logged, so an entry also stops applying when the grid byte of
+     * `src` (`sraw`) or of `cell` (`mraw`) changes (the attack's own hazard types count as empty),
+     * when the falling blocks that paint `cell` change phase (`fsig`: the fall writer rewrites
+     * the cells it passes) and, for the attack's entries (`by_attack`), at its next script step.
+     * `colw_on` is set once the attack is stepped (boss room only). */
+    struct { uint8_t cell, side, type, nb, src, sraw, mraw, by_attack, fsig; } colw[24];
+    unsigned colw_count;
+    uint8_t colw_on, attack_seen;
     uint8_t oam_mode;
 } od_visual_state;
 void od_visual_init(od_visual_state *visual, const od_game *game);
 int od_visual_tick(od_visual_state *visual, const od_game *before,
                      const od_game *after);
+/* Boss room: record the background writes of the attack script that ran this tick (its cells
+ * with the facing columns of their neighbours). Call once per tick, after the combat step and
+ * before od_visual_tick, so the order of the writes within the tick is kept. */
+void od_visual_attack_step(od_visual_state *visual, const od_game *game,
+                           const od_boss_attack *attack);
 /* Freeze flag that gates the status clock: non-zero freezes od_hud_clock.
  * It is the game's freeze bits plus the celebration flag. */
 uint8_t od_scene_flags(const od_game *game);

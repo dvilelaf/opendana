@@ -143,6 +143,11 @@ typedef struct {
     unsigned scroll_state;    /* bit 7 = the every-other-frame toggle */
     unsigned scroll_timer;
     unsigned scroll_y;        /* 0..239 */
+    /* Sideways scroll of the lava strip of a scrolling round. The level loop counts it once per
+     * iteration, before the pause and death test, from the end of the entry wait to the
+     * celebration; the level load clears it and a retry does not, so the strip carries on
+     * after the reload (`od_game_lava_counts` says when the next tick counts). */
+    unsigned lava_x;
     /* Solved-level exit tail: counted after `celebration_done`, latched in
      * `level_exit`. The app (main.c) uses `level_exit` to hand the frame over
      * to the map scene; the fade of those frames is presentation. */
@@ -278,11 +283,12 @@ typedef struct {
      * the cell for the drain's steam. */
     unsigned hazard_effect;
     /* Moving flames put out this tick (by a sliding or falling block, or by a
-     * falling span) and the span columns a flame stopped, both cleared at the
-     * start of `od_game_tick`. The presentation needs them to match the fire
-     * count and the shattered-column effects it retains. */
+     * falling span) and the span columns a flame stopped or that left the field of
+     * a scrolling round, both cleared at the start of `od_game_tick`. The
+     * presentation needs them to match the fire count and the shattered-column
+     * effects it retains. */
     unsigned flame_kills;
-    unsigned cascade_flame_mask;
+    unsigned cascade_stop_mask;
     od_enemy_list enemies;        /* live enemies of the current level */
     od_enemy_list initial_enemies;/* snapshot restored on a retry */
     uint8_t initial_cells[OD_GRID_H][OD_GRID_W];
@@ -363,6 +369,10 @@ void od_game_recount_fires(od_game *g);
  * the enemy clock. Increments `retries`. A death never resolves by itself: the
  * failure band's retry option calls this (callers may also use it directly). */
 void od_game_retry(od_game *g);
+/* Whether the next tick increments `lava_x` (the loop that counts is running). */
+int od_game_lava_counts(const od_game *g);
+/* The part of the next count the picture already shows (see game.c). */
+int od_game_lava_shows_next(const od_game *g);
 
 /* 1-based world of the level being played (level_index / 10 + 1), or 1 when the
  * index is unknown. Used by the renderer to pick the level's sprite set. */

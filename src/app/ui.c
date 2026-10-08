@@ -47,7 +47,8 @@ static FILE *state_thumbnail_file(const char *path, long max_bytes)
     if(h==NULL)return NULL;
     BY_HANDLE_FILE_INFORMATION info;
     if(!GetFileInformationByHandle(h,&info)||GetFileType(h)!=FILE_TYPE_DISK||
-       (info.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY))) {
+       (info.dwFileAttributes&(FILE_ATTRIBUTE_REPARSE_POINT|FILE_ATTRIBUTE_DIRECTORY))||
+       (max_bytes&&(info.nFileSizeHigh||info.nFileSizeLow>(DWORD)max_bytes))) {
         CloseHandle(h);return NULL;
     }
     int fd=_open_osfhandle((intptr_t)h,_O_RDONLY|_O_BINARY);

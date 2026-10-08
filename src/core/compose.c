@@ -6,6 +6,7 @@
  * The resolved presentation compositor is tested on complete frames, including
  * sprites and HUD. */
 #include "opendana/compose.h"
+#include "opendana/content_tables.h"
 #include "opendana/presentation_data.h"
 
 #include "cJSON.h"
@@ -560,6 +561,14 @@ void od_compose_present(od_index_frame *fb, const od_presentation *p,
             unsigned tile = p->tiles[by / 8][x / 8];
             uint8_t bg = od_tile_pixel(chr + tile * OD_TILE_BYTES, x & 7, by & 7);
             unsigned palette = p->palettes[by / 8][x / 8] & 3;
+            if (p->lava_on && y >= 208 && y < 216) {
+                /* The strip's tile row starts two lines above line 208; its last two
+                 * lines belong to the next tile row, which is blank. */
+                unsigned sx = (unsigned)x + p->lava_x, line = (unsigned)y - 206u;
+                bg = line < 8 ? od_tile_pixel(chr + (p->lava_base + (sx / 8) % 4) *
+                                              OD_TILE_BYTES, sx & 7, line) : 0;
+                palette = 0;
+            }
             uint8_t color = p->palette.ram[bg ? palette * 4 + bg : 0];
             for (unsigned i = 0; i < count; i++) {
                 const od_sprite *s = &p->sprites[selected[i]];
@@ -930,12 +939,24 @@ static unsigned hero_sprites(od_sprite *out, unsigned capacity,
 }
 
 static void present_game(od_presentation *p, const od_game *g,
-                         const od_palette_ram *pal, const unsigned long *ticks)
+                         const od_palette_ram *pal, const unsigned long *ticks,
+                         int emit_flames)
 {
     memset(p, 0, sizeof(*p));
     const od_world_gfx *w = od_world_gfx_for_level(g->level_index);
     if (!w) w = od_world_gfx_for_world(0);
     p->scroll_y = g->scroll_y % 240u; /* scroll of the auto-scrolling rounds */
+    if (g->scroll_enabled && ticks) {
+        /* The strip's tiles follow the fire bank's animation (the table of worlds 1..8 in
+         * every world, unlike the fire cells of world 9); its sideways scroll is the
+         * game's `lava_x` (C6.74). */
+        unsigned long tick = *ticks;
+        p->lava_on = 1;
+        p->lava_base = od_background_bank(4, 0, tick) * 64u + 4u; /* world 9 included */
+        /* The strip is drawn at the frame's split, once that frame has counted: what the next tick
+         * will count is already in it. */
+        p->lava_x = (g->lava_x + (unsigned)od_game_lava_shows_next(g)) % 32u;
+    }
     p->palette = *pal;
     if (w) memcpy(p->palette.ram, w->palette_ram, sizeof(p->palette.ram));
     /* The first step of a connector transit loads a palette entry (sprite palette 0,
@@ -988,14 +1009,18 @@ static void present_game(od_presentation *p, const od_game *g,
                              (uint16_t)(base + 0x50 + k), 0};
         }
     }
-    present_flames(p, g);
+    if (emit_flames)
+        present_flames(p, g);
 }
 
 void od_present_game(od_presentation *p, const od_game *g,
                       const od_palette_ram *pal)
 {
-    present_game(p, g, pal, NULL);
+    present_game(p, g, pal, NULL, 1);
 }
+
+/* qimg.pal marker: nothing to redraw for the queued cell. */
+#define OD_QIMG_NONE 0xFE
 
 /* Background palette index a cell renders with under `cells` (the world's
  * per-cell palette), used to keep the falling block's destination in its
@@ -1017,6 +1042,131 @@ static uint8_t cell_bg_pal(const od_game *g,
     return t.bg_pal;
 }
 
+/* Background column writes of the boss room (od_visual_state.colw). */
+/* The grid byte as the background sees it: the attack carves its hazard types (0x0F, 0x10) into the
+ * grid without writing the background, so they count as empty. */
+static uint8_t colw_grid(const od_game *g, unsigned cell)
+{
+    uint8_t raw = g->cells[cell >> 4][cell & 15];
+    return raw == 0x0F || raw == 0x10 ? 0 : raw;
+}
+
+/* Phase of the falling blocks that paint `cell` (their source and the cell below it): it changes
+ * whenever the fall writer rewrites the cells it passes. */
+static uint8_t colw_fall_sig(const od_visual_state *v, unsigned cell)
+{
+    unsigned sig = 0;
+    for (unsigned i = 0; i < v->fall_count; i++) {
+        if (v->fall[i].cell != cell && v->fall[i].cell + (unsigned)OD_GRID_W != cell) continue;
+        unsigned w = v->fall[i].wait;
+        sig = sig * 31 + v->fall[i].cell * 3 + (w == 0 ? 0 : w > 4 ? 1 : 2);
+    }
+    return (uint8_t)sig;
+}
+
+static void colw_clear(od_visual_state *v, unsigned cell, unsigned side)
+{
+    unsigned k = 0;
+    for (unsigned i = 0; i < v->colw_count; i++)
+        if (!(v->colw[i].cell == cell && v->colw[i].side == side))
+            v->colw[k++] = v->colw[i];
+    v->colw_count = k;
+}
+
+static void colw_note(od_visual_state *v, const od_game *g, unsigned src, unsigned cell,
+                      unsigned side, unsigned type, unsigned nb, int attack)
+{
+    colw_clear(v, cell, side);
+    if (v->colw_count == sizeof v->colw / sizeof v->colw[0]) {
+        memmove(&v->colw[0], &v->colw[1], sizeof v->colw - sizeof v->colw[0]);
+        v->colw_count--;
+    }
+    v->colw[v->colw_count].cell = (uint8_t)cell;
+    v->colw[v->colw_count].side = (uint8_t)side;
+    v->colw[v->colw_count].type = (uint8_t)type;
+    v->colw[v->colw_count].nb = (uint8_t)nb;
+    v->colw[v->colw_count].src = (uint8_t)src;
+    v->colw[v->colw_count].sraw = colw_grid(g, src);
+    v->colw[v->colw_count].mraw = colw_grid(g, cell);
+    v->colw[v->colw_count].by_attack = (uint8_t)attack;
+    v->colw[v->colw_count].fsig = colw_fall_sig(v, cell);
+    v->colw_count++;
+}
+
+/* An entry whose source or margin cell changed in the grid, or whose falling blocks changed phase,
+ * was covered by another write: it is gone for good, not only hidden while the change lasts. */
+static void colw_prune(od_visual_state *v, const od_game *g)
+{
+    unsigned k = 0;
+    for (unsigned i = 0; i < v->colw_count; i++) {
+        unsigned cell = v->colw[i].cell, src = v->colw[i].src;
+        if (cell < OD_GRID_W * OD_GRID_H && src < OD_GRID_W * OD_GRID_H &&
+            colw_grid(g, cell) == v->colw[i].mraw && colw_grid(g, src) == v->colw[i].sraw &&
+            colw_fall_sig(v, cell) == v->colw[i].fsig)
+            v->colw[k++] = v->colw[i];
+    }
+    v->colw_count = k;
+}
+
+/* The attack's entries live until its next script step. */
+static void colw_drop_attack(od_visual_state *v)
+{
+    unsigned k = 0;
+    for (unsigned i = 0; i < v->colw_count; i++)
+        if (!v->colw[i].by_attack) v->colw[k++] = v->colw[i];
+    v->colw_count = k;
+}
+
+/* The writes of one cell `x`: its own two columns replace whatever was logged there and the
+ * facing column of each horizontal neighbour is taken from the grid now. The attack's writer skips
+ * a neighbour of the wall type (0x10) and looks the neighbour up by its own type only; the effect
+ * drain's span skips only the column facing a wall type on its left and also uses the cell it faces. */
+static void colw_cell(od_visual_state *v, const od_game *g, unsigned x, int attack)
+{
+    if (x >= OD_GRID_W * OD_GRID_H) return;
+    unsigned cx = x & 15, cy = x >> 4;
+    unsigned self = g->cells[cy][cx] & 15;
+    colw_clear(v, x, 0);
+    colw_clear(v, x, 1);
+    /* The span writer indexes the right column of a cell by (type, raw byte of its right neighbour):
+     * a wall neighbour (0x10) runs the index into the next type's row, so the column shown is the
+     * one of the following type beside nothing. */
+    if (!attack && cx < OD_GRID_W - 1 && g->cells[cy][cx + 1] == 0x10)
+        colw_note(v, g, x, x, 1, (self + 1) & 15, 0, 0);
+    if (cx > 0) {
+        unsigned raw = g->cells[cy][cx - 1];
+        if (raw != 0x10) colw_note(v, g, x, x - 1, 1, raw & 15, attack ? 0 : self, attack);
+    }
+    if (cx < OD_GRID_W - 1) {
+        unsigned raw = g->cells[cy][cx + 1];
+        if (raw != 0x10 || !attack) colw_note(v, g, x, x + 1, 0, raw & 15, attack ? 0 : self, attack);
+    }
+}
+
+void od_visual_attack_step(od_visual_state *v, const od_game *g, const od_boss_attack *a)
+{
+    v->colw_on = 1;
+    if (!a || !a->alive) {
+        if (v->attack_seen) colw_drop_attack(v);
+        v->attack_seen = 0;
+        return;
+    }
+    const od_engine_tables *t = od_engine_tables_get();
+    unsigned count = a->state[3];
+    if (count > 31) count = 31;
+    if (count < v->attack_seen) v->attack_seen = 0;
+    if (!t) return;
+    if (count != v->attack_seen) colw_drop_attack(v);
+    for (unsigned i = v->attack_seen; i < count; i++) {
+        unsigned cursor = t->boss_attack_offset[i];
+        while (cursor + 1 < OD_BOSS_ATTACK_DATA && t->boss_attack_data[cursor] != 0xff) {
+            colw_cell(v, g, t->boss_attack_data[cursor], 1);
+            cursor += 2;
+        }
+    }
+    v->attack_seen = (uint8_t)count;
+}
+
 void od_visual_init(od_visual_state *v, const od_game *g)
 {
     memset(v, 0, sizeof(*v));
@@ -1030,6 +1180,7 @@ int od_visual_tick(od_visual_state *v, const od_game *before,
         return 0;
     od_visual_state next = *v;
     unsigned added = 0;
+    colw_prune(&next, after);
     /* Pushed block and cascade spans. The game already resolved these contacts;
      * presentation only retains their event cells. */
     if (after->fires < before->fires) {
@@ -1079,9 +1230,19 @@ int od_visual_tick(od_visual_state *v, const od_game *before,
             /* A column stopped by fire was queued above; only the ones the hazard stopped
              * are added here. */
             if (type != 14 && (support == 15 || support == 16 ||
-                                (after->cascade_flame_mask >> i & 1u)) && next.queued < 16) {
-                next.qimg[next.queued].type = OD_CELL_FIRE;
-                next.qimg[next.queued].pal = 0xFF;
+                                (after->cascade_stop_mask >> i & 1u)) && next.queued < 16) {
+                /* The column the flame or the hazard stopped stays drawn as the ice it
+                 * fell with, in its own palette, until the queued effect steams it away
+                 * (C6.72, 2-10 f17125..f17127, 10-10 f25171..f25173). */
+                uint8_t cells[OD_GRID_H][OD_GRID_W];
+                memcpy(cells, before->cells, sizeof(cells));
+                cells[cell / 16][cell % 16] = before->drop_tiles[i];
+                next.qimg[next.queued].type = before->drop_tiles[i];
+                next.qimg[next.queued].pal =
+                    cell_bg_pal(after, (const uint8_t (*)[OD_GRID_W])cells, cell);
+                next.qimg[next.queued].left = i ? before->drop_tiles[i - 1] : 0;
+                next.qimg[next.queued].right = i + 1 < after->cascade_width ?
+                                               before->drop_tiles[i + 1] : 0;
                 next.queue[next.queued++] = (uint8_t)cell;
                 added++;
             }
@@ -1090,9 +1251,18 @@ int od_visual_tick(od_visual_state *v, const od_game *before,
     /* A moving ice block destroyed by a hazard (or by the boss) queues its own
      * cell too. */
     if (after->hazard_effect && next.queued < 16) {
+        /* A moving flame put out by the block has no background tile, so nothing is
+         * pending for the cell (OD_QIMG_NONE); a fire cell or a hazard keeps the fire
+         * image until the effect (C6.72, 6-10 f19651). */
         next.qimg[next.queued].type = OD_CELL_FIRE;
-        next.qimg[next.queued].pal = 0xFF;
-        next.queue[next.queued++] = (uint8_t)(after->hazard_effect - 1u);
+        /* A block that slid through an empty cell leaves nothing to restore there either: the
+         * background of that cell is only written when the effect lands. */
+        unsigned hc = (unsigned)after->hazard_effect - 1u;
+        next.qimg[next.queued].pal = (after->flame_kills > before->flame_kills ||
+                                      (hc < OD_GRID_W * OD_GRID_H &&
+                                       before->cells[hc / OD_GRID_W][hc % OD_GRID_W] != OD_CELL_FIRE)) ?
+                                     OD_QIMG_NONE : 0xFF;
+        next.queue[next.queued++] = (uint8_t)(hc);
         added++;
     }
     if (after->effect_count > before->effect_count + added) return 0;
@@ -1111,6 +1281,8 @@ int od_visual_tick(od_visual_state *v, const od_game *before,
         if (disp_count < sizeof(disp_cells) / sizeof(disp_cells[0]))
             disp_cells[disp_count++] = cell;
     }
+    if (next.colw_on)
+        for (unsigned j = 0; j < disp_count; j++) colw_cell(&next, after, disp_cells[j], 0);
     /* The effect dispatch runs BEFORE the slots advance. A slot ending this tick
      * cannot be reused by the dispatcher until the following tick. */
     for (unsigned i = 0; i < 16; i++) {
@@ -1324,6 +1496,7 @@ static void restore_pending_fire(od_presentation *p, const od_game *g,
                                  const od_visual_state *v)
 {
     for (unsigned i = 0; i < v->queued; i++) {
+        if (v->qimg[i].pal == OD_QIMG_NONE) continue;
         if (v->qimg[i].pal == 0xFF) {
             draw_bg_cell(p, g, v->queue[i], OD_CELL_FIRE, v->ticks);
             continue;
@@ -1438,13 +1611,18 @@ static void restore_falling_tiles(od_presentation *p, const od_game *g,
  * the neighbour it faces changes and the joint tiles depend on that neighbour: a
  * wall next to ice that arrived shows its ice joint. Tile column `x` of row `y`:
  * is it such a rewritten edge? */
-static int arena_edge_rewritten(const od_game *g, const od_world_gfx *wg,
-                                unsigned x, unsigned y)
+static int arena_edge_rewritten(const od_game *g, const od_visual_state *v,
+                                const od_world_gfx *wg, unsigned x, unsigned y)
 {
     unsigned cx = x / 2, cy = y / 2, side = x & 1;
     if (cy >= OD_GRID_H || (side ? cx == OD_GRID_W - 1 : cx == 0)) return 0;
     unsigned ncx = side ? cx + 1 : cx - 1;
-    int now = g->cells[cy][ncx] & 15, was = g_arena_grid[cy * 16 + ncx] & 15;
+    /* The neighbour is what the background still shows for it: a cell the wand changed keeps its
+     * previous image until the redraw (`magic`), and so does the edge that faces it. */
+    int now = g->cells[cy][ncx] & 15;
+    for (unsigned i = 0; i < v->magic_count && i < 3; i++)
+        if (v->magic[i].cell == cy * 16 + ncx) now = v->magic[i].type;
+    int was = g_arena_grid[cy * 16 + ncx] & 15;
     if (now == was) return 0;
     uint8_t type = (uint8_t)(g->cells[cy][cx] & 15);
     od_gfx_tiles a, b;
@@ -1482,7 +1660,7 @@ static void present_game_visual_impl(od_presentation *p, const od_game *g,
                                      const od_boss *boss,
                                      const od_boss_attack *attack)
 {
-    present_game(p, g, pal, &v->ticks);
+    present_game(p, g, pal, &v->ticks, 0);
     restore_pending_fire(p, g, v);
     restore_falling_tiles(p, g, v);
     restore_magic_cells(p, g, v);
@@ -1512,6 +1690,24 @@ static void present_game_visual_impl(od_presentation *p, const od_game *g,
         banks[3] = g_arena_lower_banks[(age / 4) % 3];
         uint8_t attack_cells[256];
         od_boss_attack_graphics(attack_cells, attack);
+        /* The logged column writes, oldest first, over what the grid and the attack drew. */
+        uint8_t forced[30][32];
+        memset(forced, 0, sizeof forced);
+        for (unsigned i = 0; i < v->colw_count; i++) {
+            unsigned cell = v->colw[i].cell, side = v->colw[i].side;
+            unsigned src = v->colw[i].src;
+            if (cell >= OD_GRID_W * OD_GRID_H || src >= OD_GRID_W * OD_GRID_H ||
+                colw_grid(g, cell) != v->colw[i].mraw ||
+                colw_grid(g, src) != v->colw[i].sraw ||
+                colw_fall_sig(v, cell) != v->colw[i].fsig)
+                continue;
+            if (side)
+                draw_bg_half(p, g, cell, v->colw[i].type, 0, v->colw[i].nb, 0, v->ticks);
+            else
+                draw_bg_half(p, g, cell, v->colw[i].type, v->colw[i].nb, 0, 1, v->ticks);
+            unsigned tx = (cell & 15) * 2 + side, ty = (cell >> 4) * 2;
+            forced[ty][tx] = forced[ty + 1][tx] = 1;
+        }
         /* Both stone metatiles: plain and joined to ice. */
         od_gfx_tiles stone[2];
         const od_world_gfx *wg = od_world_gfx_for_level(g->level_index);
@@ -1534,7 +1730,8 @@ static void present_game_visual_impl(od_presentation *p, const od_game *g,
             for (unsigned i = 0; i < v->queued; i++)
                 if (v->queue[i] == cell) changed = 1;
             if (!changed && wg)
-                changed = arena_edge_rewritten(g, wg, x, y);
+                changed = arena_edge_rewritten(g, v, wg, x, y);
+            if (forced[y][x]) changed = 1;
             if (changed) {
                 unsigned bank = p->tiles[y][x] / 64;
                 unsigned slot = bank == od_background_bank(2, od_game_world(g), v->ticks) ? 0 :
@@ -1553,7 +1750,7 @@ static void present_game_visual_impl(od_presentation *p, const od_game *g,
              * (erase). The grid only stores the hazard type, losing both graphic phase and
              * direction. */
             unsigned graphic = attack_cells[cell];
-            if (graphic < 23) {
+            if (graphic < 23 && !forced[y][x]) {
                 tile = g_arena_attack_tiles[graphic * 4 + (x & 1) * 2 + (y & 1)];
                 p->tiles[y][x] = (uint16_t)(banks[tile / 64] * 64 + tile % 64);
                 p->palettes[y][x] = graphic ? 3 : 1;
@@ -1578,6 +1775,9 @@ static void present_game_visual_impl(od_presentation *p, const od_game *g,
                 (uint16_t)(bank + (s->tile & 127)), s->attr};
         }
     }
+    /* The object loop emits the steam before the flames (C6.74, castle 8-10 f21165:
+     * the flame draws over the cloud in the frames the rotation puts the steam first). */
+    present_flames(p, g);
     compose_boss(p, boss);
     od_order_sprites(p, hero_count, (v->oam_mode + 3) & 3);
 }

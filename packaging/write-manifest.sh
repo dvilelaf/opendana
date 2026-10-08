@@ -4,7 +4,7 @@
 # real application binary and the pinned SDL2 library). Prints the manifest
 # SHA-256 on stdout. The gate itself is packaging/license-bundle.sh.
 #
-#   write-manifest.sh --materials DIR --platform linux|windows --commit SHA \
+#   write-manifest.sh --materials DIR --platform linux|windows|macos --commit SHA \
 #       --source-info application-source.json --application FILE \
 #       --sdl2-sha256 HEX --toolchain TEXT --flags TEXT [--mingw-version TEXT]
 #       [--runtime-lock sources.lock --runtime-sha256 HEX]    (C6.50: AppImage publication)

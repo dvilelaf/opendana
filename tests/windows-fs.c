@@ -47,6 +47,19 @@ int main(int argc, char **argv)
     assert(od_fs_exists(other));
     (void)joined;
 #endif
+    /* rename(2) replaces an existing regular file (settings.ini, save files). */
+    {
+        char a[4096], b[4096];
+        od_fs_join(a, sizeof(a), root, "ren-a");
+        od_fs_join(b, sizeof(b), root, "ren-b");
+        assert(od_fs_write(a, "new", 3) == 0);
+        assert(od_fs_write(b, "old!", 4) == 0);
+        assert(od_fs_rename(a, b) == 0);
+        assert(!od_fs_exists(a));
+        data = od_fs_read(b, &size);
+        assert(data && size == 3 && memcmp(data, "new", 3) == 0);
+        free(data);
+    }
     assert(od_fs_remove_r(root) == 0);
     assert(od_fs_remove_r(other) == 0);
     assert(od_fs_remove_r(root) == 0);

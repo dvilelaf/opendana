@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # C6.9/C6.30: strictly local, hash-pinned corresponding-materials gate. No downloads.
 #
-# Modes: tar (Linux TAR), windows (Windows ZIP), appimage (AppImage publication, C6.50:
+# Modes: tar (Linux TAR), windows (Windows ZIP), macos (macOS .dmg, C6.70: the TAR set; the
+# artifacts are bound WITHOUT their ad hoc code signature), appimage (AppImage publication, C6.50:
 # the TAR set plus the Type-2 runtime and its statically linked libraries, each with its
 # notice, exact version proved in its own source archive and corresponding source; the
 # runtime binary is bound by SHA-256 and the LGPL-2.1 libfuse must contain the full licence
@@ -178,7 +179,7 @@ def main():
     parser = argparse.ArgumentParser(description='Offline engineering gate; not legal certification')
     parser.add_argument('--manifest', required=True)
     parser.add_argument('--sha256', required=True)
-    parser.add_argument('--mode', choices=['tar', 'windows', 'appimage'], required=True)
+    parser.add_argument('--mode', choices=['tar', 'windows', 'macos', 'appimage'], required=True)
     parser.add_argument('--artifact', action='append', default=[])
     parser.add_argument('--output', help='New bundle directory; existing output is never replaced')
     args = parser.parse_args()
@@ -338,10 +339,15 @@ def main():
         'relink_materials_sha256': hashlib.sha256(relink).hexdigest(),
         'warning': 'Caller-attested engineering evidence, not legal certification or ROM audit'},
         indent=2, sort_keys=True) + '\n').encode()
-    shared = ('SDL2 is shared: replace bin/SDL2.dll with an ABI-compatible modified build.\n'
-              if args.mode == 'windows' else
-              'SDL2 is shared: replace lib/libSDL2-2.0.so.0 with an ABI-compatible modified build;\n'
-              'the application uses $ORIGIN/../lib.\n')
+    if args.mode == 'windows':
+        shared = 'SDL2 is shared: replace bin/SDL2.dll with an ABI-compatible modified build.\n'
+    elif args.mode == 'macos':
+        shared = ('SDL2 is shared: replace OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib with an\n'
+                  'ABI-compatible modified build and sign again (RELINK.txt); the application uses\n'
+                  '@executable_path/../Frameworks.\n')
+    else:
+        shared = ('SDL2 is shared: replace lib/libSDL2-2.0.so.0 with an ABI-compatible modified build;\n'
+                  'the application uses $ORIGIN/../lib.\n')
     if args.mode == 'appimage':
         shared += ('The AppImage runtime (the executable at the start of the file) statically links libfuse\n'
                    '(LGPL-2.1), squashfuse, zstd, zlib, mimalloc and musl. Their notices and sources are\n'

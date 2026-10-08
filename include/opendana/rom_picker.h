@@ -24,6 +24,14 @@ typedef enum {
     OD_PICK_PENDING       /* the dialog is still open (poll again)         */
 } od_pick_result;
 
+/* The game window the dialog belongs to (C6.76). The chooser is opened on top of it,
+ * as its child, instead of minimising the game: the front end fills what it knows
+ * from SDL_GetWindowWMInfo and leaves the rest zero. */
+typedef struct {
+    unsigned long x11_window;   /* X11 window id (Linux, X11 only; 0 = unknown)  */
+    void *native_window;        /* Windows: the HWND (0 elsewhere)               */
+} od_picker_parent;
+
 typedef struct {
     int fd;                 /* read end of the child's stdout (-1 = none)   */
     long pid;               /* child pid (0 = none)                         */
@@ -31,12 +39,31 @@ typedef struct {
     char start[1024];       /* preferred start directory ("" = default)     */
     char buf[4096];
     size_t len;
+    /* C6.76 */
+    int attached;           /* 1: the dialog is a child of / in front of the game window,
+                             * 0: it could not be (no window id, Wayland, the tool refused
+                             * --attach): the front end then minimises as a last resort */
+    int kind;               /* the running tool: 0 zenity, 1 kdialog, 2 osascript, 3 Windows thread */
+    unsigned long parent_x11;
+    void *parent_native;
+    long started_ms;        /* when the child started (to tell a refused option from a cancel) */
+    void *thread;           /* Windows: the dialog thread (opaque) */
+    void *shared;           /* Windows: the thread's result block (opaque) */
 } od_rom_picker;
 
 /* Start the chooser (or record UNAVAILABLE). Returns at once.
  * `start_dir` (may be NULL) is the folder the dialog opens in. */
 void od_rom_picker_begin_at(od_rom_picker *p, const char *start_dir);
 void od_rom_picker_begin(od_rom_picker *p);
+
+/* C6.76: the same, with the dialog a CHILD of the game window (Linux: --attach and
+ * --modal for zenity, --attach for kdialog; Windows: the window is the owner, in its own
+ * thread so the game keeps drawing; macOS: osascript's dialog is brought to the front).
+ * `parent` may be NULL. `p->attached` tells whether it worked; when it is 0 and a
+ * chooser is running, the front end minimises the game window as a last resort. If a tool
+ * rejects --attach (it exits at once with a usage error), the picker restarts it without. */
+void od_rom_picker_begin_child(od_rom_picker *p, const char *start_dir,
+                               const od_picker_parent *parent);
 
 /* Remembered last folder: persisted under the user's XDG data directory.
  * `od_rom_picker_last_dir` returns 1 when a folder was stored.

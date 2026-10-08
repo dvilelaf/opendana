@@ -44,7 +44,11 @@ od_require_tools() {
     done
 }
 
-od_sha256() { sha256sum -- "$1" | cut -d' ' -f1; }
+# C6.70: macOS has shasum, not sha256sum.
+od_sha256() {
+    if command -v sha256sum >/dev/null 2>&1; then sha256sum -- "$1" | cut -d' ' -f1
+    else shasum -a 256 -- "$1" | cut -d' ' -f1; fi
+}
 
 # od_check_pin FILE EXPECTED "what"
 od_check_pin() {

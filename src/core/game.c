@@ -369,6 +369,22 @@ static void hero_pixels(od_game *g)
         g->lethal = 1;
 }
 
+/* Whether the level loop's next iteration advances the strip's scroll. The loop starts after
+ * the entry wait and every iteration counts, before the pause and death test, so neither
+ * stops it; it ends with the celebration (the level-done flag rises). The rule and its
+ * evidence (castle 1-10 f17615, 9-10 f24399..f24442) are in docs/trace. */
+int od_game_lava_counts(const od_game *g)
+{
+    return g->scroll_enabled && g->entry_hold <= 1 && !g->celebration_done;
+}
+
+/* What the strip's split sees on the frame the next iteration would draw: the iteration that
+ * ends the loop still counts before it ends, so only the entry wait matters here. */
+int od_game_lava_shows_next(const od_game *g)
+{
+    return g->scroll_enabled && g->entry_hold <= 1;
+}
+
 /* The auto-scroll task, the first of the frame. State 0 waits: on a
  * scrolling round a toggle bit flips every call and on the calls that clear
  * it the timer counts down; at zero it requests its sound and enters state 1.
@@ -996,7 +1012,7 @@ static void cascade_tick(od_game *g)
         if (flame_hit) {
             stop[i] = 1;
             stopped = 1;
-            g->cascade_flame_mask |= 1u << i;
+            g->cascade_stop_mask |= 1u << i;
         }
         if (cell_at(g, p + i) == 14) { /* fire in the destination row */
             /* Puts the fire out and queues the column's one effect entry; the
@@ -1021,6 +1037,7 @@ static void cascade_tick(od_game *g)
             /* The span left the play field of a scrolling round. */
             stop[i] = 1;
             stopped = 1;
+            g->cascade_stop_mask |= 1u << i;
         }
     }
     if (!stopped) {
@@ -1904,12 +1921,14 @@ void od_game_tick(od_game *g, unsigned buttons)
     g->boss_hit = 0;
     g->hazard_effect = 0;
     g->flame_kills = 0;
-    g->cascade_flame_mask = 0;
+    g->cascade_stop_mask = 0;
     /* The idle countdown drops once per frame, before the frame's decision. */
     if (g->idle_timer) --g->idle_timer;
     if (g->game_over) return;
     /* The auto-scroll task runs first, once the play loop has started (its
      * timer is loaded on the tick before the first entry pose). */
+    if (od_game_lava_counts(g))
+        ++g->lava_x;
     if (g->entry_hold <= 1)
         scroll_task(g);
     /* Decisions, then animation, then magic. An in-flight program finishes

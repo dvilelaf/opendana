@@ -8,6 +8,7 @@ echo '== C6.30 packaging: licence gate, AppImage runtime guard, CMake controls =
 python3 tests/linux-package-license-bundle.py
 python3 tests/linux-package-appimage-runtime.py
 python3 tests/linux-package-appimage-gate.py
+python3 tests/macos-package-controls.py
 bash tests/linux-package-cmake.sh
 # The leak test lives in the maintainers' private tree; run it only when present.
 if [ -f tests/package-leaks.sh ]; then

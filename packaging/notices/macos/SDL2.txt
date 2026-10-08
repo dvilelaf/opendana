@@ -1,0 +1,39 @@
+Component: SDL2
+Version: 2.32.10
+License: Zlib
+Origin: https://github.com/libsdl-org/SDL
+Revision: 5d249570393f7a37e037abf22cd6012a4cc56a71
+
+This is the SDL2 shared library shipped in the package as
+OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib (install name
+@rpath/libSDL2-2.0.0.dylib, universal x86_64 + arm64). It is built on macOS with Xcode's
+AppleClang from the SDL 2.32.10 source tree at the revision above (SDL_GetRevision:
+SDL-release-2.32.10-0-g5d24957). The application finds it through the relative run path
+@executable_path/../Frameworks and it can be replaced by an ABI-compatible build; see
+RELINK.txt and sources/relink-materials.tar.xz. The package carries an ad hoc code
+signature on it: the file whose SHA-256 is bound in BUILD-IDENTITY.json is the one the
+build produced, before signing; signing only adds one load command and the signature data
+in __LINKEDIT, and every section of both architectures stays byte-identical (checked by
+tests/macos-package.py).
+
+Third-party code compiled into the same library (Sun/fdlibm, HIDAPI, yuv2rgb, imKStoUCS and
+Khronos headers) is covered by the separate SDL2-embedded notice.
+
+--- license text ---
+Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+
+This software is provided 'as-is', without any express or implied
+warranty.  In no event will the authors be held liable for any damages
+arising from the use of this software.
+
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it
+freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must not
+   claim that you wrote the original software. If you use this software
+   in a product, an acknowledgment in the product documentation would be
+   appreciated but is not required.
+2. Altered source versions must be plainly marked as such, and must not be
+   misrepresented as being the original software.
+3. This notice may not be removed or altered from any source distribution.

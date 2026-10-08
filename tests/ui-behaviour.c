@@ -7,6 +7,8 @@
  * the case fails explicitly instead of not compiling. */
 #if !defined(_WIN32)
 #define _XOPEN_SOURCE 700
+#else
+#define _WIN32_WINNT 0x0601
 #endif
 #include "opendana/ui.h"
 #include "opendana/ui_font.h"
@@ -24,6 +26,19 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <windows.h>
+#ifndef SYMBOLIC_LINK_FLAG_DIRECTORY
+#define SYMBOLIC_LINK_FLAG_DIRECTORY 0x1
+#endif
+#ifndef SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+#define SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE 0x2
+#endif
+#define MKDIR(p) _mkdir(p)
+#else
+#define MKDIR(p) mkdir((p), 0755)
+#endif
 
 void SDLCALL SDL_DestroyTexture(SDL_Texture *t) { (void)t; }
 SDL_Texture *SDLCALL SDL_CreateTexture(SDL_Renderer *r, Uint32 f, int a, int w, int h)
@@ -54,7 +69,7 @@ od_status __wrap_od_state_peek(const char *path, od_state_info *out)
     return OD_OK;
 }
 
-static int cases, failed_cases, checks, failures, case_failed;
+static int cases, failed_cases, checks, failures, case_failed, skipped;
 #define EXPECT(cond, ...)                                                     \
     do {                                                                      \
         checks++;                                                             \
@@ -77,6 +92,62 @@ static int cases, failed_cases, checks, failures, case_failed;
 
 static char tmp[600];
 
+/* The per-user data home the states screen reads: $XDG_DATA_HOME on POSIX,
+ * %LOCALAPPDATA% on Windows (src/core/userdir.c). */
+static void set_data_home(const char *dir)
+{
+#ifdef _WIN32
+    char buf[1000];
+    snprintf(buf, sizeof buf, "LOCALAPPDATA=%s", dir);
+    _putenv(buf);
+#elif defined(__APPLE__)
+    /* C6.70: macOS keeps per-user data under $HOME/Library/Application Support (userdir.c),
+     * so a test folder is reached by pointing HOME at it (see data_base). */
+    setenv("HOME", dir, 1);
+#else
+    setenv("XDG_DATA_HOME", dir, 1);
+#endif
+}
+
+/* Symbolic link at `link` pointing to `target`; 0 on success, -1 on error, -2
+ * when this Windows does not really create symbolic links (wine 6.0.3
+ * accepts CreateSymbolicLink and creates nothing): the case is then skipped
+ * and reported as such, never counted as passed. */
+static int make_symlink(const char *target, const char *link, int is_dir)
+{
+#ifdef _WIN32
+    if (!CreateSymbolicLinkA(link, target,
+                             (is_dir ? SYMBOLIC_LINK_FLAG_DIRECTORY : 0) |
+                             SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE))
+        return -1;
+    return GetFileAttributesA(link) == INVALID_FILE_ATTRIBUTES ? -2 : 0;
+#else
+    (void)is_dir;
+    return symlink(target, link);
+#endif
+}
+
+/* Give both files the same, fixed modification time. */
+static void same_mtime(const char *a, const char *b)
+{
+#ifdef _WIN32
+    const char *paths[2] = { a, b };
+    FILETIME ft = { 0xC66D0000u, 0x01DA1747u };   /* 1700000000 s after 1970 */
+    for (int i = 0; i < 2; i++) {
+        HANDLE h = CreateFileA(paths[i], FILE_WRITE_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                               NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (h != INVALID_HANDLE_VALUE) {
+            SetFileTime(h, NULL, NULL, &ft);
+            CloseHandle(h);
+        }
+    }
+#else
+    struct timespec t[2] = { { 1700000000, 500 }, { 1700000000, 500 } };
+    utimensat(AT_FDCWD, a, t, 0);
+    utimensat(AT_FDCWD, b, t, 0);
+#endif
+}
+
 static void path_join(char *out, size_t cap, const char *a, const char *b)
 {
     snprintf(out, cap, "%s/%s", a, b);
@@ -89,10 +160,10 @@ static void mkdirs(const char *path)
     for (char *p = buf + 1; *p; p++)
         if (*p == '/') {
             *p = '\0';
-            mkdir(buf, 0755);
+            MKDIR(buf);
             *p = '/';
         }
-    mkdir(buf, 0755);
+    MKDIR(buf);
 }
 
 static int file_text(const char *path, char *out, size_t cap)
@@ -185,10 +256,24 @@ static void write_png(const char *path)
     od_png_write_rgb(path, 4, 2, rgb);
 }
 
+/* C6.70: where the product keeps per-user data inside a test folder `h`, and how a test points
+ * it there. Linux/Windows-style: XDG_DATA_HOME=h. macOS (userdir.c) ignores XDG_* and uses
+ * $HOME/Library/Application Support, so the test sets HOME=h instead. */
+static void data_base(char *out, size_t cap, const char *h)
+{
+#if defined(__APPLE__)
+    snprintf(out, cap, "%s/Library/Application Support", h);
+#else
+    snprintf(out, cap, "%s", h);
+#endif
+}
+
+
 static void write_slot(const char *data_home, int slot, int same_time)
 {
-    char dir[800], state[900], png[900];
-    snprintf(dir, sizeof dir, "%s/opendana/states", data_home);
+    char dir[800], state[900], png[900], base[760];
+    data_base(base, sizeof base, data_home);
+    snprintf(dir, sizeof dir, "%s/opendana/states", base);
     mkdirs(dir);
     snprintf(state, sizeof state, "%s/slot-%d.odstate", dir, slot);
     snprintf(png, sizeof png, "%s/slot-%d.png", dir, slot);
@@ -196,9 +281,7 @@ static void write_slot(const char *data_home, int slot, int same_time)
     if (f) { fputs("state", f); fclose(f); }
     write_png(png);
     if (same_time) {
-        struct timespec t[2] = { { 1700000000, 500 }, { 1700000000, 500 } };
-        utimensat(AT_FDCWD, state, t, 0);
-        utimensat(AT_FDCWD, png, t, 0);
+        same_mtime(state, png);
     }
 }
 
@@ -208,7 +291,7 @@ static void ui13_same_mtime_thumbnail(void)
     char home[700];
     path_join(home, sizeof home, tmp, "ui13");
     write_slot(home, 1, 1);
-    setenv("XDG_DATA_HOME", home, 1);
+    set_data_home(home);
     open_states(8);
     EXPECT(ui.slot_occupied[0], "slot 1 not listed");
     EXPECT(ui.slot_thumbnails[0].w > 0,
@@ -224,8 +307,14 @@ static void ui14_aliased_folder(void)
     path_join(alias, sizeof alias, tmp, "ui14-alias");
     write_slot(real, 1, 1);
     unlink(alias);
-    EXPECT(symlink(real, alias) == 0, "symlink");
-    setenv("XDG_DATA_HOME", alias, 1);
+    int rc = make_symlink(real, alias, 1);
+    if (rc == -2) {
+        skipped++;
+        printf("SKIP UI-14: this Windows does not create symbolic links\n");
+        return;
+    }
+    EXPECT(rc == 0, "symlink");
+    set_data_home(alias);
     open_states(8);
     EXPECT(ui.slot_thumbnails[0].w > 0,
            "thumbnail under an aliased data folder is not shown");
@@ -233,12 +322,20 @@ static void ui14_aliased_folder(void)
     char target[800], link[900], state[900];
     path_join(target, sizeof target, tmp, "ui14-target.png");
     write_png(target);
-    snprintf(state, sizeof state, "%s/opendana/states/slot-2.odstate", real);
+    char base[760];
+    data_base(base, sizeof base, real);
+    snprintf(state, sizeof state, "%s/opendana/states/slot-2.odstate", base);
     FILE *f = fopen(state, "wb");
     if (f) { fputs("state", f); fclose(f); }
-    snprintf(link, sizeof link, "%s/opendana/states/slot-2.png", real);
+    snprintf(link, sizeof link, "%s/opendana/states/slot-2.png", base);
     unlink(link);
-    EXPECT(symlink(target, link) == 0, "symlink png");
+    rc = make_symlink(target, link, 0);
+    if (rc == -2) {
+        skipped++;
+        printf("SKIP UI-14: this Windows does not create symbolic links (file)\n");
+        return;
+    }
+    EXPECT(rc == 0, "symlink png");
     open_states(8);
     EXPECT(ui.slot_occupied[1] && ui.slot_thumbnails[1].w == 0,
            "a symbolic link at slot-2.png was followed");
@@ -716,6 +813,9 @@ int main(void)
 {
     setvbuf(stdout, NULL, _IONBF, 0);   /* lines survive a sanitizer abort */
     const char *t = getenv("TMPDIR");
+#ifdef _WIN32
+    if (t == NULL || t[0] == '\0') t = getenv("TEMP");
+#endif
     snprintf(tmp, sizeof tmp, "%s/ui-behaviour", t && t[0] ? t : "/tmp");
     mkdirs(tmp);
     CASE("UI-1  Delete: focused slot, confirmed, states screen only", ui1_delete_focused_slot);
@@ -737,7 +837,7 @@ int main(void)
     CASE("UI-25 a directory is not read as settings", ui25_settings_directory);
     CASE("F1 opens the controls, Esc closes, hint flag persists", c640_controls);
     CASE("applications-menu question and Settings row", c646_desktop);
-    printf("ui-behaviour: %d cases (%d red), %d checks, %d failures\n", cases,
-           failed_cases, checks, failures);
+    printf("ui-behaviour: %d cases (%d red), %d checks, %d failures, %d skipped\n", cases,
+           failed_cases, checks, failures, skipped);
     return failures ? 1 : 0;
 }

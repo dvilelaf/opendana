@@ -37,11 +37,13 @@ static od_status put(char *out, size_t cap, const char *fmt, const char *a,
     return OD_OK;
 }
 
+#if !defined(_WIN32)   /* Windows reads its folders through od_fs_getenv() below */
 static const char *env_nonempty(const char *name)
 {
     const char *v = getenv(name);
     return v != NULL && v[0] != '\0' ? v : NULL;
 }
+#endif
 
 #if defined(_WIN32)
 /* The base folder as UTF-8, whatever the ANSI code page (C6.36): the file

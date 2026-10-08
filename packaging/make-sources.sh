@@ -2,7 +2,7 @@
 # C6.30: generate, at build time, the corresponding sources and licence
 # materials of a package. Nothing here is tracked in git as an archive.
 #
-#   make-sources.sh --commit SHA --platform linux|windows --out DIR
+#   make-sources.sh --commit SHA --platform linux|windows|macos --out DIR
 #
 # Environment: SDL2_SRC (SDL git tree holding OD_PIN_SDL_COMMIT) and OD_ROM
 # (the EU ROM, read only, for the auditor).
@@ -31,7 +31,7 @@ while [ "$#" -gt 0 ]; do
         *) echo "error: unknown argument: $1" >&2; exit 2 ;;
     esac
 done
-case "$platform" in linux|windows) ;; *) echo "error: --platform linux|windows" >&2; exit 2 ;; esac
+case "$platform" in linux|windows|macos) ;; *) echo "error: --platform linux|windows|macos" >&2; exit 2 ;; esac
 [ -n "$commit" ] && [ -n "$out" ] || { echo "error: --commit and --out are required" >&2; exit 2; }
 od_require_env SDL2_SRC "the SDL git tree that contains commit $OD_PIN_SDL_COMMIT (read only)"
 od_audit_require_rom

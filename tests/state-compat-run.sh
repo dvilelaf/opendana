@@ -12,11 +12,17 @@ for lib in "$b/libopendana_ext.a" "$b/libopendana_core.a"; do
 done
 out="$(mktemp -d "${TMPDIR:-/tmp}/state-compat.XXXXXX")"
 trap 'rm -rf "$out"' EXIT
+# shellcheck source=tests/portable.sh
+. tests/portable.sh
 extra=()
 [ "$src" = "." ] || extra=(-DOD_COMPAT_NO_REASON "$src/src/ext/state.c")
-cc -std=c11 -Wall -Wextra -Werror -I"$src/include" -Iinclude "${extra[@]}" \
+# GNU ld only: ld64 has no such option (and the positive control, which needs it, is not run
+# on macOS: it is a control of the test, not of the product).
+dup=(-Wl,--allow-multiple-definition)
+[ "$od_is_darwin" = 0 ] || dup=()
+cc -std=c11 -Wall -Wextra -Werror $od_plat_cflags -I"$src/include" -Iinclude ${extra[@]+"${extra[@]}"} \
     tests/state-compat.c "$b/libopendana_ext.a" "$b/libopendana_core.a" -lm \
-    -Wl,--allow-multiple-definition -o "$out/state-compat"
+    ${dup[@]+"${dup[@]}"} -o "$out/state-compat"
 if [ "$src" = "." ]; then
     "$out/state-compat" "$out/s.odstate"
 else

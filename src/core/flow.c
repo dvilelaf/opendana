@@ -419,6 +419,9 @@ static void flow_retry_scene_clock(od_flow *f, unsigned k)
         v->visual.ticks++;
     od_present_game_visual(&v->queued, &f->game, &v->visual,
                             &f->assets->palette_ram);
+    /* The level loop does not run during the reload, so the strip's scroll stays as it
+     * stands and nothing is counted ahead (castle 9-10 f24399..f24442). */
+    v->queued.lava_x = f->game.lava_x % 32u;
 }
 
 static void flow_view_tick(od_flow *f, unsigned buttons)
@@ -532,6 +535,9 @@ static void flow_view_tick(od_flow *f, unsigned buttons)
             f->game.sound_request = 0;
             f->game.sound_count = 0;
             v->retry_tick = 1;
+            /* The level loop does not iterate on this frame: the strip on screen was prepared
+             * counting an iteration that never comes. */
+            v->visible.lava_x = f->game.lava_x % 32u;
             flow_retry_scene_clock(f, 0);
         }
         return;
@@ -551,6 +557,8 @@ static void flow_view_tick(od_flow *f, unsigned buttons)
         od_game_tick(&f->game, buttons);
     /* Scene animation clock (A9): steam, falling tiles and the animated CHR
      * banks step once per gameplay tick, exactly as the H3 fixture. */
+    if (v->combat_active)
+        od_visual_attack_step(&v->visual, &f->game, &v->combat.attack);
     od_visual_tick(&v->visual, &before, &f->game);
     /* The freeze bit applies on clear/death and while the boss attack is alive
      * (`attack_lock`: the clock stays put from f26191, the init frame); a nonzero
@@ -663,6 +671,16 @@ static void flow_view_draw(const od_flow *f, od_index_frame *fb, int hud)
         od_screens_retry(fb, f->assets->chr,
                           v->pause.active ? v->pause.menu.visible_selection
                                           : v->retry_new_game ? 1u : 0u);
+    /* Auto-scrolling rounds: the status band, and the TRY AGAIN band over it, start two
+     * lines higher (their tile row sits under the lava strip, which begins on line
+     * 206), so the band moves two lines up and its last two lines are background
+     * (C6.74, castle 1-10: the glyph rows are 223..229, 225..231 elsewhere). */
+    if (shown.lava_on && (hud || v->pause.active || v->retry_tick)) {
+        memmove(fb->index + OD_HUD_TOP * OD_SCREEN_W,
+                fb->index + (OD_HUD_TOP + 2) * OD_SCREEN_W,
+                (OD_SCREEN_H - OD_HUD_TOP - 2) * OD_SCREEN_W);
+        memset(fb->index + (OD_SCREEN_H - 2) * OD_SCREEN_W, 0x0F, 2 * OD_SCREEN_W);
+    }
     /* Reload fade: the whole picture through the brightness table. Once re-armed,
      * the arena fades in through its own palette. */
     const uint8_t *lut = od_palette_fade_lut();

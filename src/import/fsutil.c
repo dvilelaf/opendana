@@ -374,7 +374,7 @@ int od_fs_rename(const char *from, const char *to)
 {
 #ifdef _WIN32
     wchar_t *wf = widen(from), *wt = widen(to);
-    int ok = wf && wt && MoveFileExW(wf, wt, MOVEFILE_WRITE_THROUGH);
+    int ok = wf && wt && MoveFileExW(wf, wt, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH);
     free(wf);
     free(wt);
     return ok ? 0 : -1;

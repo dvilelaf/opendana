@@ -149,6 +149,7 @@ static void test_save_file(void)
     remove(path);
 }
 
+#ifndef _WIN32   /* the Windows branch is tests/test_windows_userdir.c */
 static void test_save_default_path(void)
 {
     printf("- save: default path respects the environment\n");
@@ -164,6 +165,18 @@ static void test_save_default_path(void)
     if (had_home)
         snprintf(home, sizeof(home), "%s", old_home);
 
+#if defined(__APPLE__)
+    /* C6.70: on macOS the per-user data folder is ~/Library/Application Support (userdir.c)
+     * and XDG_DATA_HOME is ignored: the same two environments, the platform's answers. */
+    setenv("HOME", "/tmp/opendana-home", 1);
+    setenv("XDG_DATA_HOME", "/tmp/opendana-xdg", 1);
+    od_save_default_path(path, sizeof(path));
+    CHECK_EQ_U32(strcmp(path, "/tmp/opendana-home/Library/Application Support/opendana/save.dat"), 0);
+
+    unsetenv("XDG_DATA_HOME");
+    od_save_default_path(path, sizeof(path));
+    CHECK_EQ_U32(strcmp(path, "/tmp/opendana-home/Library/Application Support/opendana/save.dat"), 0);
+#else
     setenv("XDG_DATA_HOME", "/tmp/opendana-xdg", 1);
     od_save_default_path(path, sizeof(path));
     CHECK_EQ_U32(strcmp(path, "/tmp/opendana-xdg/opendana/save.dat"), 0);
@@ -172,6 +185,7 @@ static void test_save_default_path(void)
     setenv("HOME", "/tmp/opendana-home", 1);
     od_save_default_path(path, sizeof(path));
     CHECK_EQ_U32(strcmp(path, "/tmp/opendana-home/.local/share/opendana/save.dat"), 0);
+#endif
 
     unsetenv("HOME");
     od_save_default_path(path, sizeof(path));
@@ -187,8 +201,11 @@ static void test_save_default_path(void)
     else
         unsetenv("HOME");
 }
+#endif
 
 OD_TEST(test_save_roundtrip)
 OD_TEST(test_save_reject)
 OD_TEST(test_save_file)
+#ifndef _WIN32
 OD_TEST(test_save_default_path)
+#endif

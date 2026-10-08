@@ -85,6 +85,7 @@ if want --unit; then
     channel "unit: cursor auto-hide timer" "" bash tests/cursor-hide-run.sh
     channel "unit: applications-menu launcher" "" bash tests/desktop-run.sh
     channel "unit: ROM chooser child" "" bash tests/import-picker-child.sh
+    channel "unit: ROM chooser attached to the window" "" bash tests/picker-attach-run.sh
     lab_channel "unit: reference manifest" tools/audit/content_manifest.sh "" bash tools/audit/content_manifest.sh --check
     channel "unit: packaging controls" "" bash tests/linux-package-unit.sh
     lab_channel "unit: ledger check, positive control" tools/dev/test_check_l8.sh "" bash tools/dev/test_check_l8.sh

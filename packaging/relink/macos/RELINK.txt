@@ -1,0 +1,77 @@
+RELINK instructions - OpenDana, macOS .dmg
+=======================================================
+
+No component of this package is LGPL. There is therefore no LGPL relink obligation: the
+app links only the SDL2 shared library (Zlib), which is shared and substitutable, plus the
+system libraries and frameworks of macOS.
+
+Components
+----------
+- application        GPL-3.0-or-later      OpenDana.app/Contents/MacOS/opendana
+- SDL2 2.32.10       Zlib                  OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib (shared)
+- SDL2-embedded      SunPro/BSD/MIT/Zlib/Apache-2.0 (compiled into SDL2)
+- cJSON 1.7.18       MIT                   (compiled into the application)
+- stb_image 2.30     MIT (alternative A)   (compiled into the application)
+- stb_image_write 1.16 MIT (alternative A) (compiled into the application)
+- stb_truetype       MIT (alternative A)   (compiled into the application)
+- Inter              SIL OFL 1.1           Contents/share/opendana/fonts (data)
+
+The exact versions, source archives and their SHA-256 are in SOURCES.json.
+
+Code signature
+--------------
+The app and the dylib have an AD HOC signature (`codesign -s -`): no certificate, not
+notarized. The SHA-256 values in BUILD-IDENTITY.json are those of the files as the linker
+leaves them, BEFORE the signature: signing adds one load command and the signature data in
+__LINKEDIT and leaves every section of both architectures byte-identical (the package check
+compares them). After replacing or rebuilding a component, sign again:
+
+    codesign --force --sign - OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib
+    codesign --force --sign - OpenDana.app
+
+Rebuilding the application
+--------------------------
+sources/application.tar.xz is the complete corresponding source of the application: the
+`git archive` of the commit printed by `opendana --version`. Build it on macOS with Xcode
+and CMake 3.30 (x86_64 and arm64 in one binary):
+
+    tar -xJf sources/application.tar.xz
+    cd opendana-*/
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DOD_PACKAGE=ON -DOD_BUILD_TESTS=OFF \
+        -DCMAKE_OSX_ARCHITECTURES="x86_64;arm64" -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0 \
+        -DSDL2_DIR=<an SDL2 2.32.x prefix>/lib/cmake/SDL2
+    cmake --build build
+
+Replacing SDL2
+--------------
+The application resolves SDL2 through the run path @executable_path/../Frameworks. To
+substitute an ABI-compatible SDL2 build, overwrite the shipped file in place and sign again:
+
+    cp <your-libSDL2-2.0.0.dylib> OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib
+    codesign --force --sign - OpenDana.app/Contents/Frameworks/libSDL2-2.0.0.dylib
+    codesign --force --sign - OpenDana.app
+
+Keep the install name @rpath/libSDL2-2.0.0.dylib. No relink of the application is required
+because SDL2 is a shared library.
+
+Rebuilding the shipped SDL2
+---------------------------
+The corresponding source is sources/SDL2.tar.xz (SDL2-2.32.10, git revision
+5d249570393f7a37e037abf22cd6012a4cc56a71, REVISION.txt
+release-2.32.10-0-g5d24957). The recipe, the generated SDL_config.h, the compiled units and
+the compile flags are in sources/relink-materials.tar.xz:
+
+    build-sdl.sh      configure/build/install recipe
+    SDL_config.h      configuration header produced by the build
+    objects.txt       the compiled units
+    flags.txt         per-file FLAGS/DEFINES/INCLUDES and compiler
+    README.txt        step-by-step reproduction
+
+Expected result:
+
+    lib/libSDL2-2.0.0.dylib
+    SHA-256 6b7102ce71827c187bfce5f89b73c1cf52b44ce445369969db630d3e6a223f75
+
+Modification and reverse engineering of the shipped components for debugging
+is permitted by the applicable licenses; no additional restriction is added
+by this bundle.

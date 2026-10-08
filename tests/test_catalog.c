@@ -1,7 +1,8 @@
 /* test_catalog.c - unit tests for the catalogue (src/ext/catalog.c). */
-#define _XOPEN_SOURCE 700   /* mkdtemp, dirent */
+#define _XOPEN_SOURCE 700   /* dirent */
 #include "test.h"
 #include "opendana/ext/catalog.h"
+#include "fsutil.h"
 
 #include <dirent.h>
 #include <stdio.h>
@@ -74,10 +75,11 @@ static void test_catalog_ids_case(void)
 
 static void test_catalog_case(void)
 {
-    const char *tmp = getenv("TMPDIR");
-    snprintf(g_dir, sizeof g_dir, "%s/opendana-c54-cat-XXXXXX",
-             tmp && tmp[0] ? tmp : "/tmp");
-    if (mkdtemp(g_dir) == NULL) {
+    char tmp[400];
+    if (!od_fs_getenv("TMPDIR", tmp, sizeof tmp) && !od_fs_getenv("TEMP", tmp, sizeof tmp))
+        snprintf(tmp, sizeof tmp, "/tmp");
+    snprintf(g_dir, sizeof g_dir, "%s/opendana-c54-cat-XXXXXX", tmp);
+    if (od_fs_mkdtemp(g_dir) != 0) {
         CHECK(0 && "mkdtemp failed");
         return;
     }

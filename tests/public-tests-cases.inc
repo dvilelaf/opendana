@@ -17,5 +17,6 @@
 {"test_ui_editor.c", "*", "unit", "own synthetic editor document and preview"},
 {"test_ui_strings.c", "*", "unit", "modern interface strings"},
 {"test_video.c", "*", "unit", "viewport arithmetic"},
+{"test_windows_userdir.c", "*", "unit", "Windows per-user directories from own environment variables (empty elsewhere)"},
 {"test_worldmap.c", "*", "unit", "synthetic progression, markers and destinations"},
 {"test_worldmap_hidden.c", "*", "unit", "synthetic title input, hidden menu input and progression bitmap"},

@@ -40,6 +40,7 @@
 #include "opendana/render_sdl.h"
 #include "opendana/replay.h"
 #include "opendana/rom_picker.h"
+#include <SDL_syswm.h>
 #include "opendana/save.h"
 #include "opendana/screens.h"
 #include "opendana/ui.h"
@@ -2831,16 +2832,43 @@ static void ir_import(sdl_host *h, ir_screen *s, od_ui_import *st)
     od_ui_import_run(st);
 }
 
+/* C6.76: the game window as the chooser's parent (the dialog opens on top of it, as its
+ * child, and the game is no longer minimised). Fields stay 0 when SDL cannot say (Wayland
+ * native, a platform without a window id, a headless run). */
+static void picker_parent(sdl_host *h, od_picker_parent *pp)
+{
+    memset(pp, 0, sizeof *pp);
+    if (h == NULL || h->rend.window == NULL)
+        return;
+    SDL_SysWMinfo wm;
+    SDL_VERSION(&wm.version);
+    if (!SDL_GetWindowWMInfo(h->rend.window, &wm))
+        return;
+#if defined(SDL_VIDEO_DRIVER_X11)
+    if (wm.subsystem == SDL_SYSWM_X11)
+        pp->x11_window = (unsigned long)wm.info.x11.window;
+#endif
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
+    if (wm.subsystem == SDL_SYSWM_WINDOWS)
+        pp->native_window = (void *)wm.info.win.window;
+#endif
+}
+
+/* Set while the game window is minimised because the chooser could not attach to it. */
+static int g_picker_minimised;
+
 static void ir_start_picker(options *o, sdl_host *h, ir_screen *s, od_ui_import *st,
                             od_rom_picker *picker,
                             int *active)
 {
     (void)s;
     char last[1024];
-    od_rom_picker_begin_at(picker, od_rom_picker_last_dir(last, sizeof last) ? last : NULL);
+    od_picker_parent pp;
+    picker_parent(h, &pp);
+    od_rom_picker_begin_child(picker, od_rom_picker_last_dir(last, sizeof last) ? last : NULL,
+                              (!o->headless && h->rend.window) ? &pp : NULL);
     *active = 1;
-    if (!o->headless && h->rend.window)
-        SDL_MinimizeWindow(h->rend.window);
+    g_picker_minimised = 0;
     od_ui_import_set_status(st, od_str(OD_STR_FR_WAITING), 0);
 }
 
@@ -2990,12 +3018,24 @@ static int run_first_run(options *o, const char *capture)
             char perr[160] = {0};
             od_pick_result pr = od_rom_picker_poll(&picker, chosen,
                                                       sizeof chosen, perr, sizeof perr);
+            /* C6.76: the last resort. The dialog could not be made a child of the game window
+             * (no window id, Wayland native, or the tool refused --attach): minimise the game
+             * so the dialog is not left behind it, as before C6.76. */
+            if (pr == OD_PICK_PENDING && !picker.attached && !g_picker_minimised &&
+                !o->headless && h.rend.window) {
+                fprintf(stderr, "first run: the chooser could not attach to the window; "
+                                "minimising it (last resort)\n");
+                SDL_MinimizeWindow(h.rend.window);
+                g_picker_minimised = 1;
+            }
             if (pr != OD_PICK_PENDING) {
                 picker_active = 0;
                 if (!o->headless && h.rend.window) {
-                    SDL_RestoreWindow(h.rend.window);
+                    if (g_picker_minimised)
+                        SDL_RestoreWindow(h.rend.window);
                     SDL_RaiseWindow(h.rend.window);
                 }
+                g_picker_minimised = 0;
                 if (pr == OD_PICK_OK) {
                     od_rom_picker_remember(chosen);
                     od_ui_import_set_path(&st, chosen);
