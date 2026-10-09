@@ -7,8 +7,7 @@ It is written in C11 with a deterministic core, runs on Linux, Windows and
 macOS, and adds a built-in level editor, save states, gamepad support and a mod
 system.
 
-OpenDana does not include the game. It needs **your own copy of the European
-ROM**, which it imports once (see [Requirements / legal](#requirements--legal)).
+OpenDana does not include any of the original game's content. To play, you need **your own copy of the European ROM** (see [Requirements / legal](#requirements--legal)). On first start, OpenDana reads it once to extract the game's data (levels, graphics, text, music and sound effects) into a local folder. It never runs code from the ROM, does not emulate the console, does not copy or upload the ROM, and does not need it again afterwards.
 
 ## Features
 
@@ -24,7 +23,7 @@ ROM**, which it imports once (see [Requirements / legal](#requirements--legal)).
 
 OpenDana is an independent, unofficial project. It is not affiliated with or
 endorsed by the owners of the original game, and it contains **no** ROM, no
-graphics, no text and no level data of that game. The names and trademarks of
+graphics, no text, no music, no sound effects and no level data of that game. The names and trademarks of
 the original belong to their owners (see [`NOTICE`](NOTICE)).
 
 To play you need a legally obtained copy of the ROM of the European release of
@@ -131,7 +130,7 @@ adds or replaces some of those files; mods are layered on top of the package
 and the last one wins.
 
 ```sh
-opendana --mod ejemplo                     # the example mod, mods/ejemplo
+opendana --mod example                     # the example mod, mods/example
 opendana --mod /path/to/my-mod             # any directory with a mod.json
 opendana --validate /path/to/my-mod        # check a package, a mod or a level file
 opendana --play-level my-level.json --round 3
@@ -177,7 +176,7 @@ src/platform/       portable paths
 src/render/         presentation and PNG writer
 src/app/            SDL2 layer: window, input, audio, interface
 schema/             JSON schemas of the content package and of mods
-mods/ejemplo/       example mod
+mods/example/       example mod
 packaging/          package scripts, icon, notices
 tests/, tools/      tests and tools
 external/           vendored libraries with their licences

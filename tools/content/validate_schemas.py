@@ -30,7 +30,7 @@ screens/boss-background.json); a package JSON file no schema covers is an
 error, so a new file cannot ship unvalidated (C4.1).
 
     python3 tools/content/validate_schemas.py
-    python3 tools/content/validate_schemas.py --base content/base --mod mods/ejemplo
+    python3 tools/content/validate_schemas.py --base content/base --mod mods/example
 
 The second half of MJ6 (`--validate` rejects broken files) is the C-side
 validator; this tool proves the schemas accept everything the game ships, and
@@ -434,7 +434,7 @@ def main() -> int:
     parser.add_argument("--schemas", default="schema", type=Path)
     parser.add_argument("--base", default="content/base", type=Path)
     parser.add_argument("--mod", action="append", default=None, type=Path,
-                        help="mod directory to validate (repeatable); default mods/ejemplo")
+                        help="mod directory to validate (repeatable); default mods/example")
     parser.add_argument("--self-test", action="store_true",
                         help="also check that the shipped shapes are accepted and "
                              "broken documents rejected")
@@ -447,11 +447,11 @@ def main() -> int:
 
     mods = args.mod
     if mods is None:
-        mods = [Path("mods/ejemplo")]
+        mods = [Path("mods/example")]
         extra = sorted(Path("content/mods").glob("*/mod.json"))
         mods += [p.parent for p in extra]
         top = sorted(Path("mods").glob("*/mod.json"))
-        mods += [p.parent for p in top if p.parent.name != "ejemplo"]
+        mods += [p.parent for p in top if p.parent.name != "example"]
     for mod in mods:
         if (mod / "mod.json").is_file():
             v.mod(mod)

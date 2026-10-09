@@ -18,9 +18,11 @@ permissions:
 jobs:
   linux:
     name: Linux (ubuntu)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to a new GCC without notice and the build uses
+    # -Werror, so a compiler bump would turn the build red on its own.
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install SDL2
         run: |
           sudo apt-get update
@@ -47,7 +49,7 @@ jobs:
           python3 tools/content/make_example_mod.py --check
       - name: Upload the built binary on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-build
           path: build/
@@ -58,21 +60,21 @@ jobs:
   # (target opendana_tests_public) and runs it. The interactive SDL front end
   # is built by the Windows package script, not here.
   windows-core:
-    name: Windows (MSYS2/MINGW64, core only, best-effort)
+    name: Windows (MSYS2/UCRT64, core only, best-effort)
     runs-on: windows-latest
     continue-on-error: true
     defaults:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           install: >-
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
       - name: Build the core and the unit test runner (no SDL)
         run: |
           mkdir -p build

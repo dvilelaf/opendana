@@ -102,7 +102,7 @@ the move. The C counterpart is `tests/test_engine_tables.c`, which also proves
 
 ```sh
 python3 tools/content/make_mod_chr.py --base content/base \
-    --out mods/ejemplo --style hatch     # or --style solid
+    --out mods/example --style hatch     # or --style solid
 python3 tools/content/make_mod_chr.py --self-test
 ```
 
@@ -129,7 +129,7 @@ palette (committed) and Hero's CHR tiles (derived with `make_mod_chr.py`).
 python3 tools/content/make_example_mod.py
 ```
 
-Regenerates `mods/ejemplo/`: the documented example from `docs/MODDING.md`. It
+Regenerates `mods/example/`: the documented example from `docs/MODDING.md`. It
 changes ROUND 1-1's top border and repaints Hero's CHR tiles (derived with
 `make_mod_chr.py`). `tests/test_mod.c` loads it through the VFS, renders both
 frames to the test output directory and `tests/run.sh` checks that the modded frame differs.
@@ -138,7 +138,7 @@ frames to the test output directory and `tests/run.sh` checks that the modded fr
 
 ```sh
 python3 tools/content/validate_schemas.py --self-test
-python3 tools/content/validate_schemas.py --mod mods/ejemplo
+python3 tools/content/validate_schemas.py --mod mods/example
 ```
 
 Validates `content/base` and every mod (`content/mods/*` and `mods/*`) against

@@ -441,7 +441,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
         for (int x = 0; x < OD_GRID_W; x++) {
             if (d->grid[y][x] > 0x0F) {
                 char msg[64];
-                snprintf(msg, sizeof msg, "Tipo de celda invalido 0x%02X",
+                snprintf(msg, sizeof msg, "Invalid cell type 0x%02X",
                          (unsigned)d->grid[y][x]);
                 if (n < max) issue_add(out, max, &n, OD_LED_ERROR, x, y, msg,
                                      OD_LED_ISSUE_INVALID_CELL, d->grid[y][x]);
@@ -451,7 +451,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
     }
 
     if (!od_led_has_hero(d)) {
-        if (n < max) issue_add(out, max, &n, OD_LED_ERROR, -1, -1, "Falta el jugador",
+        if (n < max) issue_add(out, max, &n, OD_LED_ERROR, -1, -1, "Missing player start",
                                  OD_LED_ISSUE_MISSING_HERO, 0);
         errors++;
     } else {
@@ -460,7 +460,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
         if (py < OD_GRID_H && !cell_passable(d->grid[py][px])) {
             if (n < max)
                 issue_add(out, max, &n, OD_LED_ERROR, px, py,
-                          "El jugador empieza dentro de algo solido",
+                          "Player starts inside a solid cell",
                           OD_LED_ISSUE_HERO_SOLID, 0);
             errors++;
         }
@@ -469,7 +469,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
     if (d->theme_world < 1 || d->theme_world > 15) {
         if (n < max)
             issue_add(out, max, &n, OD_LED_ERROR, -1, -1,
-                      "Mundo de tema fuera de 1..15",
+                      "Theme world outside 1..15",
                       OD_LED_ISSUE_INVALID_WORLD, d->theme_world);
         errors++;
     }
@@ -481,7 +481,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
             if (o->type < 0x80 || o->type > 0x9F) {
                 if (n < max)
                     issue_add(out, max, &n, OD_LED_ERROR, -1, -1,
-                              "Objeto especial invalido",
+                              "Invalid special object",
                               OD_LED_ISSUE_INVALID_SPECIAL, o->type);
                 errors++;
             }
@@ -491,7 +491,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
             o->count < 1 || o->count > OD_LED_MAX_POSITIONS) {
             if (n < max)
                 issue_add(out, max, &n, OD_LED_ERROR, -1, -1,
-                          "Objeto (run) invalido",
+                          "Invalid object (run)",
                           OD_LED_ISSUE_INVALID_RUN, o->type);
             errors++;
             continue;
@@ -501,7 +501,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
             if (cell >= OD_GRID_CELLS) {
                 if (n < max)
                     issue_add(out, max, &n, OD_LED_ERROR, -1, -1,
-                              "Posicion de objeto fuera de la rejilla",
+                              "Object position outside the grid",
                               OD_LED_ISSUE_OBJECT_POSITION, cell);
                 errors++;
                 continue;
@@ -511,7 +511,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
             if (d->grid[y][x] != o->type) {
                 if (n < max)
                     issue_add(out, max, &n, OD_LED_ERROR, x, y,
-                              "El objeto no coincide con la rejilla",
+                              "Object does not match the grid",
                               OD_LED_ISSUE_OBJECT_GRID, o->type);
                 errors++;
             }
@@ -532,7 +532,7 @@ int od_led_validate(const od_led_doc *d, od_led_issue *out, int max)
         }
         if (!fire && n < max)
             issue_add(out, max, &n, OD_LED_WARNING, -1, -1,
-                      "Sin fuegos: el nivel se resuelve al empezar",
+                      "No flames: the level is solved at the start",
                       OD_LED_ISSUE_NO_FIRES, 0);
     }
 

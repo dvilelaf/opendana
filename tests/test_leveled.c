@@ -185,7 +185,7 @@ static void test_led_validate_case(void)
     /* Invalid cell type. */
     od_led_paint(&d, 2, 2, 0x1F);
     CHECK_EQ_U32(od_led_validate(&d, issues, 16), 1);
-    CHECK(strstr(issues[0].message, "Tipo de celda") != NULL);
+    CHECK(strstr(issues[0].message, "Invalid cell type") != NULL);
     od_led_undo(&d);
     CHECK_EQ_U32(od_led_validate(&d, issues, 16), 0);
 
@@ -196,14 +196,14 @@ static void test_led_validate_case(void)
     od_led_paint(&nohero, 5, 5, 0x0E);
     int errs = od_led_validate(&nohero, issues, 16);
     CHECK_EQ_U32(errs, 1);
-    CHECK(strstr(issues[0].message, "Falta el jugador") != NULL);
+    CHECK(strstr(issues[0].message, "Missing player start") != NULL);
     od_led_free(&nohero);
 
     /* Hero inside a solid cell. */
     od_led_place_hero(&d, 0, 0);   /* border block */
     errs = od_led_validate(&d, issues, 16);
     CHECK_EQ_U32(errs, 1);
-    CHECK(strstr(issues[0].message, "solido") != NULL);
+    CHECK(strstr(issues[0].message, "solid") != NULL);
 
     /* No fire: not an error, but the advisory is reported. */
     od_led_doc nofire;
@@ -213,7 +213,7 @@ static void test_led_validate_case(void)
     int n = od_led_validate(&nofire, issues, 16);
     CHECK_EQ_U32(n, 0);
     CHECK_EQ_U32(issues[0].severity, OD_LED_WARNING);
-    CHECK(strstr(issues[0].message, "Sin fuegos") != NULL);
+    CHECK(strstr(issues[0].message, "No flames") != NULL);
     od_led_free(&nofire);
 
     od_led_free(&d);

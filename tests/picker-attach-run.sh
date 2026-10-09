@@ -43,6 +43,8 @@ Xvfb -displayfd 9 -screen 0 1280x1024x24 9>"$tmp/disp" >/dev/null 2>&1 &
 xpid=$!
 for _ in $(seq 100); do [ -s "$tmp/disp" ] && break; sleep 0.1; done
 export DISPLAY=":$(head -1 "$tmp/disp" | tr -d '[:space:]')"
+# The display number is written before the server is sure to take clients: wait until it answers.
+for _ in $(seq 100); do xwininfo -root >/dev/null 2>&1 && break; sleep 0.1; done
 export SDL_AUDIODRIVER=dummy SDL_VIDEODRIVER=x11
 export HOME="$tmp/home" XDG_DATA_HOME="$tmp/data" XDG_CONFIG_HOME="$tmp/config"
 mkdir -p "$HOME" "$XDG_DATA_HOME" "$XDG_CONFIG_HOME"
@@ -67,16 +69,33 @@ DOUBLE
 game_window() { xdotool search --onlyvisible --name "^OpenDana" 2>/dev/null | head -1 || true; }
 shot_md5() { xwd -display "$DISPLAY" -id "$1" 2>/dev/null | md5sum | cut -d' ' -f1; }
 
+# start_game ENV=VALUE...: starts the first-run screen with that environment and waits for its window
+# (sets gpid and wid). SDL sometimes cannot reach the fresh Xvfb on the first try ("x11 not available",
+# the process exits at once): launch again, up to 4 times, only for that exact start-up failure.
+start_game() {
+    local attempt
+    for attempt in 1 2 3 4; do
+        env "$@" "$bin" --first-run >"$tmp/game.out" 2>"$tmp/game.err" &
+        gpid=$!
+        wid=""
+        for _ in $(seq 100); do
+            wid="$(game_window)"; [ -n "$wid" ] && break
+            kill -0 "$gpid" 2>/dev/null || break
+            sleep 0.1
+        done
+        [ -n "$wid" ] && break
+        if kill -0 "$gpid" 2>/dev/null || ! grep -q "x11 not available" "$tmp/game.err"; then break; fi
+        wait "$gpid" 2>/dev/null || true
+        sleep 0.5
+    done
+}
+
 # run_game DIR_OF_DOUBLES [REJECT]: starts the first-run screen, presses Enter, waits for the chooser.
 run_game() {
     local dir="$1"
     rm -f "$tmp/log" "$tmp/ready" "$tmp/game.err"
     : > "$tmp/log"
-    FAKE_LOG="$tmp/log" FAKE_READY="$tmp/ready" REJECT_ATTACH="${2:-0}" PATH="$dir" \
-        "$bin" --first-run >"$tmp/game.out" 2>"$tmp/game.err" &
-    gpid=$!
-    wid=""
-    for _ in $(seq 100); do wid="$(game_window)"; [ -n "$wid" ] && break; sleep 0.1; done
+    start_game FAKE_LOG="$tmp/log" FAKE_READY="$tmp/ready" REJECT_ATTACH="${2:-0}" PATH="$dir"
     [ -n "$wid" ] || fail "the first-run window never appeared: $(cat "$tmp/game.err")"
     sleep 2
     before="$(shot_md5 "$wid")"
@@ -133,10 +152,7 @@ stop_game
 if command -v zenity >/dev/null 2>&1 && [ -z "${OD_NO_REAL_ZENITY:-}" ]; then
     echo "== the real zenity =="
     : > "$tmp/log"
-    PATH="/usr/bin:/bin" GTK_USE_PORTAL=0 "$bin" --first-run >"$tmp/game.out" 2>"$tmp/game.err" &
-    gpid=$!
-    wid=""
-    for _ in $(seq 100); do wid="$(game_window)"; [ -n "$wid" ] && break; sleep 0.1; done
+    start_game PATH="/usr/bin:/bin" GTK_USE_PORTAL=0
     [ -n "$wid" ] || fail "no window for the real zenity case"
     sleep 2
     xdotool windowfocus "$wid" 2>/dev/null || true
@@ -148,7 +164,13 @@ if command -v zenity >/dev/null 2>&1 && [ -z "${OD_NO_REAL_ZENITY:-}" ]; then
         sleep 0.1
     done
     [ -n "$dlg" ] || fail "the real zenity dialog never appeared: $(cat "$tmp/game.err")"
-    st="$(xprop -id "$dlg" _NET_WM_STATE 2>/dev/null || true)"
+    # The window manager sets _NET_WM_STATE a moment after the window appears:
+    # poll (0.2 s, up to 5 s) until the property exists, then check it.
+    st=""
+    for _ in $(seq 25); do
+        st="$(xprop -id "$dlg" _NET_WM_STATE 2>/dev/null || true)"
+        case "$st" in *"not found"*|"") sleep 0.2 ;; *) break ;; esac
+    done
     case "$st" in *_NET_WM_STATE_MODAL*) ;; *) fail "the real zenity dialog is not modal: '$st'" ;; esac
     tf="$(xprop -id "$dlg" WM_TRANSIENT_FOR 2>/dev/null || true)"
     want="$(printf '0x%x' "$wid")"

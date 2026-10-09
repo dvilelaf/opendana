@@ -1,4 +1,4 @@
-# `mods/ejemplo` — the documented example mod
+# `mods/example` — the documented example mod
 
 A minimal, complete mod. It overlays the package you imported from your ROM
 (`opendana --import-rom`) and changes exactly two things, **with content of its own**
@@ -17,7 +17,7 @@ comes from the package.
 ```json
 {
   "schema_version": 2,
-  "id": "ejemplo",
+  "id": "example",
   "name": "Example mod: our own ROUND 1-1 and a striped hero",
   "version": "2.0.0",
   "levels": ["levels/1-1.json"],
@@ -49,15 +49,15 @@ paths are refused.
 
 ```sh
 # windowed
-build/opendana --mod mods/ejemplo
+build/opendana --mod mods/example
 
 # headless snapshot of ROUND 1-1 reached from reset (route R1)
-build/opendana --headless --no-audio --mod mods/ejemplo --replay tests/data/r1-input.txt \
+build/opendana --headless --no-audio --mod mods/example --replay tests/data/r1-input.txt \
     --frames 2401 --shot-frame 2400 --screenshot 1-1.png
 
 # validate it (the same parsers the game runs, over your imported package)
-build/opendana --validate mods/ejemplo
-python3 tools/content/validate_schemas.py --mod mods/ejemplo
+build/opendana --validate mods/example
+python3 tools/content/validate_schemas.py --mod mods/example
 ```
 
 ## Regenerate

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # the example mods hold no CHR of the original in the repository.
 #
-# `mods/ejemplo` and `content/mods/test-gfx` change Hero's CHR tiles. A full
+# `mods/example` and `content/mods/test-gfx` change Hero's CHR tiles. A full
 # derived sheet would version the rest of the original CHR and the auditor
 # `tools/audit/rom_free.py` flags it. The fix
 # is to derive the sheet from the user's imported
@@ -19,7 +19,7 @@ echo "== the example mods derive their CHR (no versioned CHR) =="
 
 python3 tools/content/make_mod_chr.py --self-test
 
-for rel in mods/ejemplo/graphics/chr/chr-01.png \
+for rel in mods/example/graphics/chr/chr-01.png \
            content/mods/test-gfx/graphics/chr/chr-01.png; do
     if git ls-files --cached --error-unmatch "$rel" >/dev/null 2>&1; then
         echo "ERROR: the repository versions the derived CHR '$rel'" >&2
@@ -28,7 +28,7 @@ for rel in mods/ejemplo/graphics/chr/chr-01.png \
 done
 echo "no derived mod CHR is versioned"
 
-for rel in mods/ejemplo/graphics/chr/chr-01.png \
+for rel in mods/example/graphics/chr/chr-01.png \
            content/mods/test-gfx/graphics/chr/chr-01.png; do
     if ! git check-ignore -q "$rel"; then
         echo "ERROR: generated '$rel' is not ignored (a dev run would dirty the tree)" >&2

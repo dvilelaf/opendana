@@ -11,7 +11,7 @@ see the README). It lives in your user folder (`.../opendana/content/base`).
 Below, `content/base` means *that imported package*. A mod never needs to
 contain a byte of the original game, and the repository's example mods do not.
 
-The documented example is [`mods/ejemplo`](../mods/ejemplo): it gives level 1
+The documented example is [`mods/example`](../mods/example): it gives level 1
 a layout of its own and the player character a striped sprite of its own. Read it side by side
 with this guide.
 
@@ -44,7 +44,7 @@ as the level file writes them, so a mod may move, add or remove them.
 A **mod** is a directory with a `mod.json` plus the files it adds or replaces:
 
 ```
-mods/ejemplo/
+mods/example/
   mod.json
   levels/1-1.json                  a level patch: replaces level 1 only
   graphics/patches/player.png      a CHR patch: replaces 14 tiles only
@@ -71,17 +71,17 @@ contract; the example mod validates against them (see §7).
 
 ```sh
 # windowed
-build/opendana --mod mods/ejemplo
+build/opendana --mod mods/example
 
 # the same mod by its ID (found in mods/<id> beside the package, any CWD)
-build/opendana --mod ejemplo
+build/opendana --mod example
 
 # headless: write one PNG of the mod's level 1 (graphics overlay + its level file)
-build/opendana --headless --mod ejemplo --play-level mods/ejemplo/levels/1-1.json \
+build/opendana --headless --mod example --play-level mods/example/levels/1-1.json \
     --round 1 --screenshot 1-1-mod.png
 
 # several mods, later ones win
-build/opendana --mod mods/ejemplo --mod mods/otro
+build/opendana --mod mods/example --mod mods/other
 ```
 
 Useful options:
@@ -108,12 +108,12 @@ have to copy a world file. A file in the mod's `levels` list that is **not** a
 package world file (`levels/world-NN.json`) is a **level patch**: it has the
 world-file shape, each entry carries an explicit `"number"` (1…150), and that
 entry replaces the package level with the same number and nothing else.
-`mods/ejemplo/levels/1-1.json` is a complete one:
+`mods/example/levels/1-1.json` is a complete one:
 
 ```json
 {
   "schema_version": 1,
-  "id": "ejemplo-1-1",
+  "id": "example-1-1",
   "world": 1,
   "grid_width": 16,
   "grid_height": 15,
@@ -185,7 +185,7 @@ A mod does **not** need to ship a sheet. It declares a **CHR patch** in
 ```
 
 * The PNG holds **whole 8×8 tiles**, laid out row by row, so its width and
-  height are multiples of 8. the example's PNG under `mods/ejemplo/graphics/patches/` is
+  height are multiples of 8. the example's PNG under `mods/example/graphics/patches/` is
   112×8: 14 tiles in a row.
 * The tiles are written over the package CHR starting at global tile `tile`
   (0…8191); the patch may not run past tile 8191.
@@ -247,8 +247,8 @@ Always validate before you play. Two validators, one for the manifest/levels
 (C, the product) and one for every JSON file against its schema (Python):
 
 ```sh
-build/opendana --validate mods/mi-mod
-python3 tools/content/validate_schemas.py --mod mods/mi-mod
+build/opendana --validate mods/my-mod
+python3 tools/content/validate_schemas.py --mod mods/my-mod
 ```
 
 `--validate` checks the **semantics** (grid size, valid cell types, exactly one
@@ -260,7 +260,7 @@ with a message that names the mod and the reason.
 without running the game:
 
 ```sh
-build/opendana --headless --render-level mods/mi-mod/levels/1-1.json \
+build/opendana --headless --render-level mods/my-mod/levels/1-1.json \
     --round 1 --out mi-1-1.png
 ```
 
@@ -270,7 +270,7 @@ at the start cell (bytes identical to the first `--play-level` frame).
 To play it in context:
 
 ```sh
-build/opendana --mod mods/mi-mod --play-level mods/mi-mod/levels/1-1.json --round 1
+build/opendana --mod mods/my-mod --play-level mods/my-mod/levels/1-1.json --round 1
 ```
 
 or, in the full game, play through the menu to that level.
@@ -281,21 +281,21 @@ or, in the full game, play through the menu to that level.
 
 ```sh
 # 1. the directory layout
-mkdir -p mods/mi-mod/levels mods/mi-mod/graphics/patches
+mkdir -p mods/my-mod/levels mods/my-mod/graphics/patches
 
-# 2. a level patch: copy mods/ejemplo/levels/1-1.json (or save a level from the
+# 2. a level patch: copy mods/example/levels/1-1.json (or save a level from the
 #    game's editor) and change what you like; keep "number": 1 to replace 1-1
-cp mods/ejemplo/levels/1-1.json mods/mi-mod/levels/1-1.json
+cp mods/example/levels/1-1.json mods/my-mod/levels/1-1.json
 
 # 3. (optional) your own player tiles: a PNG of whole 8x8 tiles, grey 0/85/170/255
 #    or transparent, e.g. 14 tiles in a 112x8 image; start from the example
-cp mods/ejemplo/graphics/patches/*.png mods/mi-mod/graphics/patches/player.png
+cp mods/example/graphics/patches/*.png mods/my-mod/graphics/patches/player.png
 
 # 4. write mod.json
-cat > mods/mi-mod/mod.json <<'JSON'
+cat > mods/my-mod/mod.json <<'JSON'
 {
   "schema_version": 1,
-  "id": "mi-mod",
+  "id": "my-mod",
   "name": "My first mod",
   "version": "1.0.0",
   "levels": ["levels/1-1.json"],
@@ -304,13 +304,13 @@ cat > mods/mi-mod/mod.json <<'JSON'
 JSON
 
 # 5. validate and look at it
-build/opendana --validate mods/mi-mod
-uv run --no-project python tools/content/validate_schemas.py --mod mods/mi-mod
-build/opendana --headless --mod mods/mi-mod --play-level mods/mi-mod/levels/1-1.json \
+build/opendana --validate mods/my-mod
+uv run --no-project python tools/content/validate_schemas.py --mod mods/my-mod
+build/opendana --headless --mod mods/my-mod --play-level mods/my-mod/levels/1-1.json \
     --round 1 --screenshot mi-1-1.png
 
 # 6. play
-build/opendana --mod mods/mi-mod
+build/opendana --mod mods/my-mod
 ```
 
 The rules for `mod.json` are
@@ -326,10 +326,10 @@ that only changes `palettes/master.json` lists it under `palettes`.
 ## 9. Compatibility
 
 * Every package file carries `schema_version` (currently `1`). A future version
-  bump migrates `mods/ejemplo` in the same release; a mod
+  bump migrates `mods/example` in the same release; a mod
   written for version 1 keeps working until then.
 * Mods override whole files, by relative path, last layer wins.
-* The example `mods/ejemplo` is generated from data written in
+* The example `mods/example` is generated from data written in
   `tools/content/make_example_mod.py` (`--check` verifies it) and validated by
   the test suite. It ships both of its changes (the level patch and the CHR
   patch) with content of its own, so it works in a clean checkout.

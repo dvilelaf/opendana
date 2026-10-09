@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Build the documented example mods from OUR OWN content (C6.29).
 
-`mods/ejemplo` and `content/mods/test-1-1` are deltas over the package the
+`mods/example` and `content/mods/test-1-1` are deltas over the package the
 player imports from their ROM. They contain no byte of the original game:
 
-  * `levels/1-1.json` (ejemplo) and `levels/patch-1-1.json` (test-1-1) are
+  * `levels/1-1.json` (example) and `levels/patch-1-1.json` (test-1-1) are
     level patches: world-shaped files whose single entry (`number` 1) replaces
     ROUND 1-1 only. The layouts below were designed for these mods; nothing is
     copied from the package. The other 149 levels stay the package's.
-  * `graphics/patches/player.png` (ejemplo) is a `graphics.chr_patches` entry:
+  * `graphics/patches/player.png` (example) is a `graphics.chr_patches` entry:
     14 tiles drawn here (a striped diamond), written over Hero's tiles
     0x400..0x40D. Unlike tools/content/make_mod_chr.py, nothing is derived
     from the imported package, so the PNG can be versioned and the mod works
@@ -31,9 +31,9 @@ from pathlib import Path
 HERO_FIRST_TILE = 0x400
 HERO_TILES = 14
 
-# Our 1-1 for mods/ejemplo: two rooms. Push the ice right into the first fire,
+# Our 1-1 for mods/example: two rooms. Push the ice right into the first fire,
 # drop through the hole at x=13 and push the lower ice left into the second.
-EJEMPLO_GRID = [
+EXAMPLE_GRID = [
     "2222222222222222",
     "1111111111111111",
     "1111111111111111",
@@ -50,8 +50,8 @@ EJEMPLO_GRID = [
     "1111111111111111",
     "1111111111111111",
 ]
-EJEMPLO_PLAYER = {"x": 3, "y": 6}
-EJEMPLO_OBJECTS = [
+EXAMPLE_PLAYER = {"x": 3, "y": 6}
+EXAMPLE_OBJECTS = [
     {"type": 5, "positions": [[4, 6], [12, 11]]},
     {"type": 14, "positions": [[10, 6], [4, 11]]},
 ]
@@ -146,12 +146,12 @@ def dumps(doc: dict) -> bytes:
 
 
 def outputs(root: Path) -> dict[Path, bytes]:
-    ej = root / "mods" / "ejemplo"
+    ej = root / "mods" / "example"
     t11 = root / "content" / "mods" / "test-1-1"
     return {
         ej / "mod.json": dumps({
             "schema_version": 2,
-            "id": "ejemplo",
+            "id": "example",
             "name": "Example mod: our own ROUND 1-1 and a striped hero",
             "version": "2.0.0",
             "levels": ["levels/1-1.json"],
@@ -160,7 +160,7 @@ def outputs(root: Path) -> dict[Path, bytes]:
             },
         }),
         ej / "levels" / "1-1.json": dumps(level_patch(
-            "ejemplo-1-1", EJEMPLO_GRID, EJEMPLO_PLAYER, EJEMPLO_OBJECTS)),
+            "example-1-1", EXAMPLE_GRID, EXAMPLE_PLAYER, EXAMPLE_OBJECTS)),
         ej / "graphics" / "patches" / "player.png": hero_patch_png(),
         t11 / "mod.json": dumps({
             "schema_version": 2,

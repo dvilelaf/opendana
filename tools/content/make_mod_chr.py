@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Derive a mod's CHR sheet from the imported content package (C6.18).
 
-The example mods (`mods/ejemplo`, `content/mods/test-gfx`) change Hero's CHR
+The example mods (`mods/example`, `content/mods/test-gfx`) change Hero's CHR
 tiles: indices 1024..1037 of the 128 KiB CHR, which are the first 14 tiles of
 sheet 1 (``graphics/chr/chr-01.png``). A full derived sheet would version the
 rest of the original CHR, and the release checks flag exactly that

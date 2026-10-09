@@ -38,5 +38,5 @@ content/base/
 # The example mods derive their tile image from the imported content when they
 # are used (tools/content/make_mod_chr.py); it is not versioned. These rules keep
 # it out of the tree even if the generator is run here.
-mods/ejemplo/graphics/chr/
+mods/example/graphics/chr/
 content/mods/test-gfx/graphics/chr/

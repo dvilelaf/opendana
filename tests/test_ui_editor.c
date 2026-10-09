@@ -131,7 +131,7 @@ static void test_ued_catalog_roundtrip(void)
 {
     od_ui_editor e;
     od_ued_init(&e, tmp_dir());
-    snprintf(e.doc.name, sizeof e.doc.name, "Prueba raton");
+    snprintf(e.doc.name, sizeof e.doc.name, "Mouse test");
     od_led_paint(&e.doc, 5, 5, 0x0E);
     od_led_place_hero(&e.doc, 2, 2);
     CHECK_EQ_U32(od_ued_save(&e, 1), OD_OK);
@@ -144,7 +144,7 @@ static void test_ued_catalog_roundtrip(void)
     CHECK_EQ_U32(back.doc.grid[5][5], 0x0E);
     CHECK(od_led_has_hero(&back.doc));
     CHECK_EQ_U32(back.doc.player & 0x0F, 2);
-    CHECK(strcmp(back.doc.name, "Prueba raton") == 0);
+    CHECK(strcmp(back.doc.name, "Mouse test") == 0);
 
     od_ued_free(&back);
     od_ued_free(&e);

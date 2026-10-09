@@ -110,7 +110,7 @@ typedef struct od_ui_editor {
     int brush;
     int palette_scroll;           /* unused since C6.24: every entry shows   */
     int palette_hidden;           /* 'P' hides the palette panel             */
-    int flame_brush;              /* the extra "llama" object brush           */
+    int flame_brush;              /* the extra "flame" object brush           */
 
     /* Pointer state (canvas coordinates). */
     int ptr_x, ptr_y;

@@ -33,7 +33,7 @@ request.
 - **Content is data.** New content goes into the content package (JSON and PNG
   with a schema in `schema/`), never compiled into the binary. Engine tables are
   the only exception. Changing the package format means raising
-  `schema_version` and migrating `mods/ejemplo` in the same commit.
+  `schema_version` and migrating `mods/example` in the same commit.
 - **Extensions do not change the simulation.** The editor, save states, the
   settings and the interface sit beside the core and never alter its results.
 - No tool-produced code in the product. Every routine is written and readable by
@@ -92,7 +92,7 @@ positive control: a case that is known to be wrong and must be detected.
   ship the rest.
 - Validate with `opendana --validate DIR` and
   `python3 tools/content/validate_schemas.py --mod DIR`.
-- The example mod `mods/ejemplo` is produced by
+- The example mod `mods/example` is produced by
   `tools/content/make_example_mod.py` (`--check` proves it is identical to the
   generator). It carries only art and levels made for this project.
 

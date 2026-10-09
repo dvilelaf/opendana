@@ -3364,7 +3364,7 @@ int main(int argc, char **argv)
         int mods_ok = od_import_resolve_content(content_dir, sizeof content_dir,
                                                  o.content) == OD_OK;
         for (int i = 0; mods_ok && i < o.mod_count; i++) {
-            /* C4.1: `--mod ejemplo` is the mod ID of mods/ejemplo. */
+            /* C4.1: `--mod example` is the mod ID of mods/example. */
             if (od_content_resolve_mod(mod_dirs[i], sizeof mod_dirs[i], content_dir,
                                         o.mods[i]) != OD_OK) {
                 fprintf(stderr, "cannot find mod '%s'\n", o.mods[i]);
