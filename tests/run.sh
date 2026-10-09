@@ -77,7 +77,7 @@ channel() { # channel NAME "REQS" CMD...
 
 if want --unit; then
     channel "unit: public tree in English" "" python3 tests/english-tree.py
-    channel "unit: model tests, provenance" "" bash tests/nivel1-unitario.sh
+    channel "unit: model tests, provenance" "" bash tests/level1-unit.sh
     channel "unit: editor/catalogue layout" "" bash tests/editor-ui-layout-run.sh
     channel "unit: interface screens" "" bash tests/ui-screens-layout-run.sh
     channel "unit: interface behaviour" "" bash tests/ui-behaviour-run.sh

@@ -15,11 +15,21 @@ TEXT_WORDS = [
     "sin fuegos", "solido", "posicion de", "celda invalida", "se resuelve",
     "empieza dentro", "raton", "llama",
 ]
-NAME_WORDS = ["ejemplo", "jugador", "rejilla", "invalido", "raton"]
+NAME_WORDS = [
+    "ejemplo", "jugador", "rejilla", "invalido", "raton",
+    # C6.85: words of the test file names that were Spanish
+    "nivel", "unitario", "producto", "castillo", "mundo", "mapa", "ruta", "ganadora",
+    "llamas", "escena", "fase", "fondo", "paso", "pausa", "pistas", "varita", "sonido",
+    "restos", "flujo", "carga", "ronda", "cierre", "combate", "bordes", "caida",
+    "imagen", "aparece", "sesion", "propietario", "fin-de", "fin_de",
+]
 TEXT_DIRS = ("src/", "include/")
 NAME_DIRS = ("src/", "include/", "mods/", "tests/", "tools/", "packaging/",
              "schema/", "content/")
 SELF = "tests/english-tree.py"
+# Not published: the imported package, and the reference recordings that a lab tree puts under
+# tests/data (the public repository has none; their names are the lab's).
+SKIP = ("content/base/", "tests/data/", "tests/cinematic-reference/")
 
 
 def find(text, words):
@@ -30,6 +40,10 @@ def find(text, words):
 def self_test():
     ok = (find('"Falta el jugador"', TEXT_WORDS)
           and find("mods/ejemplo", NAME_WORDS)
+          and find("tests/test_castillo_aparece.c", NAME_WORDS)
+          and find("tests/data/fin-de-mundo-r2-input.txt", NAME_WORDS)
+          and find("tests/nivel2-producto.sh", NAME_WORDS)
+          and not find("tests/test_castle_appears.c", NAME_WORDS)
           and find("/* Posicion de objeto fuera de la rejilla */", TEXT_WORDS)
           and not find("Missing player start, example mod", TEXT_WORDS))
     if not ok:
@@ -46,7 +60,7 @@ def main():
     # index of older history.
     files = sorted(str(p) for p in Path(".").rglob("*")
                    if p.is_file() and str(p).startswith(NAME_DIRS)
-                   and not str(p).startswith("content/base/"))
+                   and not str(p).startswith(SKIP))
     bad = []
     for f in files:
         if f == SELF:
