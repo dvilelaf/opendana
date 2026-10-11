@@ -4,6 +4,7 @@
   "type": "port",
   "status": "released",
   "targets": ["Linux", "Windows", "macOS"],
+  "toolchain": ["C11", "SDL2"],
   "project": "OpenDana",
   "wikidata": "Q5451293",
   "original": [
