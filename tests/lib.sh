@@ -8,10 +8,9 @@ cd "$ROOT"
 BUILD_DIR="${BUILD_DIR:-build}"
 export BUILD_DIR
 bin="$(pwd)/$BUILD_DIR/opendana"
-bindev="$(pwd)/$BUILD_DIR/opendana-dev"
 tmp="$(mktemp -d "${TMPDIR:-/tmp}/opendana-tests.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
-export bin bindev tmp ROOT
+export bin tmp ROOT
 
 if [ -f "$ROOT/tests/lib-lab.sh" ]; then
     # shellcheck source=/dev/null

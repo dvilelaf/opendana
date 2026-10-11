@@ -337,29 +337,11 @@ if(OD_BUILD_APP AND OD_SDL_AVAILABLE)
     endif()
   endif()
 
-  # opendana-dev: the same front end with the development options compiled in
-  # (scene shortcuts such as --level/--boss/--ending/--map used by the harness
-  # and the measurements). The shipped opendana does not
-  # accept them: every scene is reached from reset with buttons.
-  if(NOT OD_TARGET_ANDROID AND NOT OD_TARGET_EMSCRIPTEN AND NOT OD_TARGET_IOS)
-    add_executable(opendana-dev ${OD_APP_SOURCES} ${OD_RENDER_SOURCES})
-    target_link_libraries(opendana-dev PRIVATE opendana_core opendana_ext)
-    if(WIN32 AND TARGET SDL2::SDL2main)
-      target_link_libraries(opendana-dev PRIVATE SDL2::SDL2main)
-    endif()
-    if(OD_SDL_TARGET)
-      target_link_libraries(opendana-dev PRIVATE ${OD_SDL_TARGET})
-    else()
-      target_include_directories(opendana-dev PRIVATE ${OD_SDL_INCLUDE_DIRS})
-      target_link_libraries(opendana-dev PRIVATE ${OD_SDL_LIBRARIES})
-    endif()
-    target_include_directories(opendana-dev PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/external/stb")
-    target_compile_definitions(opendana-dev PRIVATE OD_VERSION="${OD_VERSION_STRING}"
-                               OD_DEV_TOOLS=1)
-    if(WIN32)
-      # C6.21: the first-run ROM picker uses the Win32 common file dialog.
-      target_link_libraries(opendana-dev PRIVATE comdlg32 ole32)
-    endif()
+  # Optional hook: when tests/lab-app.cmake is present it is included here and
+  # may define extra front-end targets from the variables above. That file is
+  # not part of this tree; without it only `opendana` is built.
+  if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/lab-app.cmake")
+    include("${CMAKE_CURRENT_SOURCE_DIR}/tests/lab-app.cmake")
   endif()
 
   if(OD_TARGET_ANDROID)

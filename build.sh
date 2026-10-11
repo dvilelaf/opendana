@@ -43,7 +43,5 @@ if [ ! -x "$BUILD_DIR/opendana" ]; then
 fi
 
 echo
-echo "built: $BUILD_DIR/opendana (game), $BUILD_DIR/opendana-dev (harness) and $BUILD_DIR/opendana_tests_public"
-echo "private comparators: OD_PRIVATE_ROOT=<private data repo> bash tests/public-tests-private-run.sh <category>"
+echo "built: $BUILD_DIR/opendana (game) and $BUILD_DIR/opendana_tests_public"
 echo "run:   ./$BUILD_DIR/opendana"
-echo "dev:   ./$BUILD_DIR/opendana-dev --level 0  "
