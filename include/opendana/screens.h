@@ -169,10 +169,10 @@ typedef struct {
     unsigned castle_world;
     int castle_drawn;
     unsigned castle_skip;
-    /* CIERRE-C3.6: START read during the hidden-access cinematic: 1 on the step
+    /* CLOSURE-C3.6: START read during the hidden-access cinematic: 1 on the step
      * that read it, 2 on the black step before the hidden menu. */
     unsigned hidden_skip;
-    /* FIN-DE-MUNDO: the end-of-world cinematic of
+    /* END-OF-WORLD: the end-of-world cinematic of
      * world `world_clear_world` (0..8), entered by the flow where the round-10 exit
      * would open the map, then the castle opening after world 9's, then "What
      * next?" (mode 3). `world_clear_part` is 0 for the world's clip and 1 for the
@@ -184,24 +184,24 @@ typedef struct {
     int world_clear_drawn;
     unsigned world_clear_skip;
     unsigned world_clear_seen; /* the clip's track_tick seen on the last step */
-    /* CASTILLO-APARECE: `world_clear_part` 2 is the castle appearance of
+    /* CASTLE-APPEARS: `world_clear_part` 2 is the castle appearance of
      * `world_clear_world` (0..9). It ends into the map, not
      * "What next?": `world_clear_to_map` is raised on the step after its last map
      * frame (reference 1-1 last: clip f17991..f18305, map frame f18306, map
      * opening f18307) and the flow opens the map there. */
     unsigned world_clear_to_map;
-    /* FIN-DE-MUNDO: after an end-of-world the world counter has moved the world
+    /* END-OF-WORLD: after an end-of-world the world counter has moved the world
      * "What next?"'s cont.story reopens the map on to the next one (1-10: counter
      * = 1 at the mode-3 frame f18709, map WORLD 2 at f18875). 0 = not set:
      * cont.story keeps `world`, the world the player was on (C6.23: the map's B,
      * EXIT, the magicword's YES and a password keep the counter). Any option clears
      * it. */
     unsigned whatnext_world;
-    /* CIERRE-C3.6: START in the hidden menu dispatches the round load in
+    /* CLOSURE-C3.6: START in the hidden menu dispatches the round load in
      * the same frame (reference f960), without the
      * map's round entry or its palette fade; the flow consumes it. */
     unsigned hidden_dispatch;
-    /* CIERRE-C3.6: the hidden-menu entry drawn with the VRAM upload split over
+    /* CLOSURE-C3.6: the hidden-menu entry drawn with the VRAM upload split over
      * its third frame (after the cinematic: reference f853/f704); not after a
      * NEW GAME (f1518 full). 2: after a solved hidden round the third frame
      * still shows the VRAM value of the round played (`hidden_stale_level`),
@@ -209,18 +209,18 @@ typedef struct {
      * f4445 "11-2"). */
     unsigned hidden_partial;
     int hidden_stale_level;
-    /* MAPA-MUNDOS: the ROUND focus `A` starts the fade on the map as it stands; it
+    /* WORLD-MAP: the ROUND focus `A` starts the fade on the map as it stands; it
      * does not show a recorded map. `entry_display` is the map display of the frame
      * the round was accepted on and `entry_from_map` marks a LEVEL_ENTRY scene that
      * fades it. */
     uint16_t entry_display[OD_SCENE_WORDS];
     unsigned entry_from_map;
-    /* CARGA-RONDA: the last frame of the scene a round load leaves (map
+    /* ROUND-LOAD: the last frame of the scene a round load leaves (map
      * entry, castle, boss sequence), kept for the load's first frame. */
     uint16_t hold_display[OD_SCENE_WORDS];
     od_screen_id hold_scene;
     unsigned hold_age, hold_selection, hold_entry_map;
-    /* MAPA-MUNDOS: the map loop changes its state in the frame it reads the pad,
+    /* WORLD-MAP: the map loop changes its state in the frame it reads the pad,
      * but the sprites it writes and the VRAM queue it fills (panel marks) reach the
      * screen on the next display pass (reference 5-6 route: world counter = 4 at
      * f15200, digit and marks of WORLD 5 from f15201). `map_next` is the display of
@@ -251,7 +251,7 @@ typedef struct {
      * mode-3 frame (map B, magicword `Yes`): its init has already blanked the
      * screen (only stale sprites linger), so it is drawn black. */
     int menu_blank;
-    /* R10 (CIERRE-C3.3): the session already holds progress when the title route
+    /* R10 (CLOSURE-C3.3): the session already holds progress when the title route
      * reaches its menu (a loaded save, or RESET with the save intact). Its mode 3
      * runs the same init as B and EXIT, which draws "What next?" with progress;
      * `menu_init_wait` counts to that frame. */
@@ -377,7 +377,7 @@ od_status od_screens_editor_prepare_board(od_screens *s,const od_editor *ed);
 /* The menu init (mode 3): "What next?" with progress, "Where to begin from?"
  * otherwise, entered on the next tick (map B, editor EXIT). */
 void od_screens_menu_init(od_screens *s, int progress);
-/* CIERRE-C3.6: NEW GAME in a hidden round (100..149) re-enters the hidden menu on the
+/* CLOSURE-C3.6: NEW GAME in a hidden round (100..149) re-enters the hidden menu on the
  * round just played, on its +16 frame (reference 12-10: A f1500, menu f1516,
  * "ROUND 12-10" from f1518). */
 void od_screens_hidden_return(od_screens *s, int level);
@@ -416,12 +416,12 @@ void od_screens_boss(od_screens *s);
  * automatic PAL track; the last screen loops the reference's own blink. Entered
  * from the boss victory (see the main.c notes). */
 void od_screens_ending(od_screens *s);
-/* FIN-DE-MUNDO: the end-of-world cinematic of `world_index` (0..8), entered
+/* END-OF-WORLD: the end-of-world cinematic of `world_index` (0..8), entered
  * on the frame the round-10 exit would open the map (reference 1-10: the clip
  * from f17632). It ends into "What next?" (after the castle opening for world
  * 9), exactly as the original's menu (f18709). */
 void od_screens_world_clear(od_screens *s, int world_index);
-/* CASTILLO-APARECE: the castle appearance of `world_index` (0..9), entered on
+/* CASTLE-APPEARS: the castle appearance of `world_index` (0..9), entered on
  * the frame the round's exit would open the map; it raises
  * `world_clear_to_map` on the step after its last map frame. */
 void od_screens_castle_appears(od_screens *s, int world_index);

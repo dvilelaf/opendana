@@ -5,7 +5,7 @@ int od_test_failures = 0;
 int od_test_checks = 0;
 
 /* Auto-registered cases (see OD_TEST in test.h). A case beyond the table is
- * never dropped silently: it is counted and fails the run (MAPA-PASO found
+ * never dropped silently: it is counted and fails the run (MAP-STEP found
  * 260 cases against the old 256 slots, the last four never ran). */
 #define OD_MAX_AUTO_TESTS 1024
 static const char *auto_names[OD_MAX_AUTO_TESTS];

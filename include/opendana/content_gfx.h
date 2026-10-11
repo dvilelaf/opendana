@@ -56,7 +56,7 @@ const uint8_t *od_gfx_retry_cursor_cols(void);
 unsigned od_gfx_retry_cursor_tile(void);
 
 /* screens/map.json: the WORLD map sprite tables and castle overlay, or NULL
- * when the package does not declare it (MAPA-MUNDOS). */
+ * when the package does not declare it (WORLD-MAP). */
 const od_map_art *od_gfx_map_art(void);
 
 /* screens/hearth.json: the hearth illustration of the two menus, or NULL when
@@ -159,12 +159,12 @@ typedef struct {
 /* NULL when the package does not declare the world's castle. */
 const od_castle_info *od_gfx_castle(int world_index);
 
-/* screens/world-clears.json (FIN-DE-MUNDO): the end-of-world cinematics the
+/* screens/world-clears.json (END-OF-WORLD): the end-of-world cinematics the
  * original plays when a round-10 clear completes world 1..9 (index 0..8)
  * and the castle opening that follows world 9's (index 9), with the same
  * timing fields as the castles
  * (skip_from == duration: START is not read). Produced by the importer.
- * CASTILLO-APARECE: indices 10..19 are the castle appearance of worlds 1..10
+ * CASTLE-APPEARS: indices 10..19 are the castle appearance of worlds 1..10
  * (same clip kind), clips 11..20 of the file. */
 #define OD_WORLD_CLEAR_CLIPS 20
 #define OD_WORLD_CLEAR_CASTLE_OPEN 9

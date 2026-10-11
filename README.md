@@ -2,10 +2,10 @@
 
 # OpenDana
 
-OpenDana is a native, moddable reimplementation of a classic NES puzzle game.
-It is written in C11 with a deterministic core, runs on Linux, Windows and
-macOS, and adds a built-in level editor, save states, gamepad support and a mod
-system.
+OpenDana is a native, moddable reimplementation of *Solomon's Key 2*, the NES
+puzzle game also released as *Fire 'n Ice*. It is written in C11 with a
+deterministic core, runs on Linux, Windows and macOS, and adds a built-in level
+editor, save states, gamepad support and a mod system.
 
 OpenDana does not include any of the original game's content. To play, you need **your own copy of the European ROM** (see [Requirements / legal](#requirements--legal)). On first start, OpenDana reads it once to extract the game's data (levels, graphics, text, music and sound effects) into a local folder. It never runs code from the ROM, does not emulate the console, does not copy or upload the ROM, and does not need it again afterwards.
 

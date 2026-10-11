@@ -177,15 +177,15 @@ enum track_id {
     CASTLE_W7, CASTLE_W8, CASTLE_W9,
     /* MAGICWORD: the good-night cinematic after "Today's magicword" `No`. */
     GOODNIGHT,
-    /* CIERRE-C3.6: the hidden-access cinematic (the hidden-rounds
+    /* CLOSURE-C3.6: the hidden-access cinematic (the hidden-rounds
      * announcement) between the title trigger and the hidden menu. */
     HIDDEN_INTRO,
-    /* FIN-DE-MUNDO: the end-of-world cinematic of worlds 1..9 
+    /* END-OF-WORLD: the end-of-world cinematic of worlds 1..9 
      * WORLD_CLEAR_W1 + world index, and the castle opening after world 9's. */
     WORLD_CLEAR_W1, WORLD_CLEAR_W2, WORLD_CLEAR_W3, WORLD_CLEAR_W4,
     WORLD_CLEAR_W5, WORLD_CLEAR_W6, WORLD_CLEAR_W7, WORLD_CLEAR_W8,
     WORLD_CLEAR_W9, CASTLE_OPEN,
-    /* CASTILLO-APARECE: the castle appearance of worlds 1..10 
+    /* CASTLE-APPEARS: the castle appearance of worlds 1..10 
      * CASTLE_APPEARS_W1 + world index. */
     CASTLE_APPEARS_W1, CASTLE_APPEARS_W2, CASTLE_APPEARS_W3, CASTLE_APPEARS_W4,
     CASTLE_APPEARS_W5, CASTLE_APPEARS_W6, CASTLE_APPEARS_W7, CASTLE_APPEARS_W8,
@@ -893,7 +893,7 @@ static void map_refresh(od_screens *s)
 {
     const od_map_art *art = od_gfx_map_art();
     memcpy(s->display, s->map_maqueta, sizeof s->display);
-    /* MAPA-MUNDOS: the castle map once world 9's castle is cleared, the panel
+    /* WORLD-MAP: the castle map once world 9's castle is cleared, the panel
      * marks, then the sprites (Hero, the landmark frame, the WORLD number, the
      * objects and the panel castle) in place of the ones the extracted world-1
      * layout carries. */
@@ -1875,7 +1875,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
      * original's lost NMIs (flow_frame_tick). */
     if (!s->frame_tick_by_flow)
         ++s->frame_tick;
-    /* SONIDO-MAPA: no castle clip frame is drawn unless the castle path below says
+    /* MAP-SOUND: no castle clip frame is drawn unless the castle path below says
      * so. The play and map scenes return before it, and a stale tick kept
      * audio_castle re-requesting that tick's cue (`1`) on every map frame after NEW
      * GAME from an x-10. */
@@ -1909,9 +1909,9 @@ void od_screens_tick(od_screens *s, unsigned buttons)
         case OD_SCREEN_MAGICWORD: /* logic only: no clip */
         case OD_SCREEN_PLAY: case OD_SCREEN_UNVERIFIED: break;
         }
-        /* MAPA-MUNDOS: the ROUND focus `A` fades the map it was accepted on, so keep
+        /* WORLD-MAP: the ROUND focus `A` fades the map it was accepted on, so keep
          * that display for the LEVEL_ENTRY scene. */
-        /* CARGA-RONDA: the round load's first frame still shows the frame
+        /* ROUND-LOAD: the round load's first frame still shows the frame
          * this scene last drew (od_screens_load_hold). */
         if (next == OD_SCREEN_PLAY) {
             memcpy(s->hold_display, s->display, sizeof s->hold_display);
@@ -1985,7 +1985,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
         if (s->map_reveal)
             s->map.ready = OD_MAP_REVEAL_FRAMES + 1u - lead;
         od_map_event ev = od_scene_map_tick(&s->map, buttons);
-        /* MAPA-MUNDOS: the map loop's init (state 0) runs on the last frame of the
+        /* WORLD-MAP: the map loop's init (state 0) runs on the last frame of the
          * opening and draws its first sprite frame there; the OAM shows it from the next
          * one (R1: init f4037 = map age 46, sprites from f4038). A direct opening (no
          * reveal) starts when its input hold ends. */
@@ -2061,7 +2061,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
         s->castle_round10_phase=1;s->castle_round10_status=OD_OK;
         memset(s->display, 0, sizeof s->display);
     }
-    /* FIN-DE-MUNDO: world 9's end runs into the castle opening on
+    /* END-OF-WORLD: world 9's end runs into the castle opening on
      * the frame after its own last map frame (reference f24251 -> clip again
      * f24252). */
     if (s->scene == OD_SCREEN_WORLD_CLEAR && s->world_clear_part == 0 &&
@@ -2078,7 +2078,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
          * frame are black (reference START f18000, f18001-f18002 black). */
     } else if (s->scene == OD_SCREEN_LEVEL_ENTRY && s->track == LEVEL_ENTRY &&
         s->entry_from_map) {
-        /* MAPA-MUNDOS: the fade on the accepted map (any world, the castle map
+        /* WORLD-MAP: the fade on the accepted map (any world, the castle map
          * included) instead of the recorded world-1 clip. The clip's only changes after
          * its first frame are this fade: palette brightness 14 - t through the
          * brightness table (clip ticks 3, 7, 9 and 11 are the steps), the sprites
@@ -2188,7 +2188,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
     s->castle_skip = 0;
     s->castle_drawn = s->scene == OD_SCREEN_LEVEL_ENTRY && castle_track(s->track)
                           ? (int)s->track_tick - 1 : -1;
-    /* FIN-DE-MUNDO: the clip tick drawn on this step (cues and lost NMIs are
+    /* END-OF-WORLD: the clip tick drawn on this step (cues and lost NMIs are
      * keyed on it, flow.c), -1 when no clip frame was drawn. */
     s->world_clear_drawn = -1;
     if (s->scene == OD_SCREEN_WORLD_CLEAR && !s->world_clear_skip &&
@@ -2471,7 +2471,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
             if(s->world_clear_phase==3&&s->world_clear_skip)s->world_clear_skip=2;
             break;
         }
-        /* FIN-DE-MUNDO: the recorded end-of-world cinematic
+        /* END-OF-WORLD: the recorded end-of-world cinematic
          * frame for frame; its last clip frame is the one map frame after the
          * clip window. The next frame is the menu init (black, "What next?"
          * from the frame after; reference 1-10: clip f17632..f18707, map frame f18708, menu
@@ -2479,7 +2479,7 @@ void od_screens_tick(od_screens *s, unsigned buttons)
          * script has enabled it: the START frame still shows the cinematic and requests
          * `1`, the next one (map frame) and the menu frame are black (reference 1-10: START
          * f18000, menu f18002). The castle opening never reads START.
-         * CASTILLO-APARECE: the castle appearance returns from
+         * CASTLE-APPEARS: the castle appearance returns from
          * the clear handler to the map instead: the step after its last map frame raises
          * `world_clear_to_map` and the flow opens the map on it (reference 1-1 last:
          * map frame f18306, map opening f18307). */
@@ -2793,7 +2793,7 @@ void od_screens_draw_pal(const od_screens *s, od_index_frame *fb,
         }
         return;
     }
-    /* CIERRE-C3.6: the black frame between a START skip of the
+    /* CLOSURE-C3.6: the black frame between a START skip of the
      * hidden-access cinematic and the hidden menu (reference f701). */
     if (s->scene == OD_SCREEN_HIDDEN_INTRO && s->hidden_skip == 2) {
         for (size_t i = 0; i < OD_SCREEN_W * OD_SCREEN_H; ++i)
@@ -2840,7 +2840,7 @@ void od_screens_draw_pal(const od_screens *s, od_index_frame *fb,
     }
     if (map) {
         /* C3.2: the logic panel is already patched into `display`. Without the
-         * package's map sprites (MAPA-MUNDOS), draw the Hero cursor on top with
+         * package's map sprites (WORLD-MAP), draw the Hero cursor on top with
          * the panel's own sprite palettes; with them, Hero is in the OAM. */
         od_palette_ram p;
         for (unsigned i = 0; i < 32; ++i)

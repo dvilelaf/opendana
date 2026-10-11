@@ -251,8 +251,8 @@ enum { OD_FLOW_SEQUENCE = 0, OD_FLOW_PLAY = 1, OD_FLOW_UNVERIFIED = 2 };
     unsigned editor_load;   /* editor PLAY staged load, 0 = none */        \
     uint8_t editor_palette[32];                                            \
     long clear_timer;                                                      \
-    int world_clear_world;  /* FIN-DE-MUNDO world, -1 = none */            \
-    int castle_appears_world; /* CASTILLO-APARECE world, -1 = none */      \
+    int world_clear_world;  /* END-OF-WORLD world, -1 = none */            \
+    int castle_appears_world; /* CASTLE-APPEARS world, -1 = none */      \
     od_play_view view;                                                    \
     od_password_view pw;                                                  \
     od_editor_view evw;                                                   \

@@ -1,0 +1,21 @@
+{
+  "game": "Solomon's Key 2 / Fire 'n Ice",
+  "system": "NES",
+  "type": "port",
+  "status": "released",
+  "targets": ["Linux", "Windows", "macOS"],
+  "project": "OpenDana",
+  "wikidata": "Q5451293",
+  "original": [
+    { "region": "Europe", "sha1": "08308e7731957d899260467046ab46628c116b49" }
+  ],
+  "approach": "Native C11 reimplementation with a deterministic core. No emulation: the game's data is imported once from your own copy of the European release.",
+  "notes": "Built-in level editor with a level catalogue, save states, gamepad support and a mod system (JSON and PNG content packages with schemas). OpenDana ships none of the original game's content.",
+  "tags": ["puzzle", "moddable", "level-editor", "c11"],
+  "maintainers": [
+    { "name": "David Vilela", "link": "https://github.com/dvilelaf" }
+  ],
+  "links": [
+    { "label": "Releases", "url": "https://github.com/dvilelaf/opendana/releases" }
+  ]
+}

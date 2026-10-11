@@ -1061,7 +1061,7 @@ static int load_castles(const cJSON *doc, od_castle_info *out)
 
 /* screens/world-clears.json: {"clips": [{"clip": 1..10, "duration": N,
  * "skip_from": T (optional), "frame_tick_lost": [...], "cues": [...]}, ...]}
- * (FIN-DE-MUNDO): clips 1..9 are the end-of-world cinematics, 10 the castle
+ * (END-OF-WORLD): clips 1..9 are the end-of-world cinematics, 10 the castle
  * opening after world 9. */
 static int load_world_clears(const cJSON *doc, od_castle_info *out)
 {

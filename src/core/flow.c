@@ -640,7 +640,7 @@ static void flow_view_draw(const od_flow *f, od_index_frame *fb, int hud)
                   (v->combat_active || f->level >= 90 ? 1 : 0);
     if (hud && v->bar_empty)
         /* A round load's first frame on screen: the bar rows are empty
-         * (R1 f2220, TRY AGAIN f3221, arena f25749; CARGA-RONDA.md). */
+         * (R1 f2220, TRY AGAIN f3221, arena f25749; ROUND-LOAD). */
         memset(fb->index + OD_HUD_TOP * OD_SCREEN_W, 0x0F,
                (OD_SCREEN_H - OD_HUD_TOP) * OD_SCREEN_W);
     else if (hud && v->level_template)

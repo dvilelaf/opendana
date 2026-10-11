@@ -82,7 +82,7 @@ void od_progress_complete(od_progress *p, int level);
 void od_progress_map_words(const od_progress *p, uint16_t out[OD_WORLD_COUNT]);
 uint16_t od_progress_map_word(const od_progress *p, int world);
 
-/* FIN-DE-MUNDO: what the game does on the clear of `level` (0..99) given the
+/* END-OF-WORLD: what the game does on the clear of `level` (0..99) given the
  * progress *before* it: the round's bit is OR'd into the progress words
  * (rebuilt with od_progress_map_words, which are the original's for a session
  * played in order or loaded from a magicword) and the worlds are walked from 0
