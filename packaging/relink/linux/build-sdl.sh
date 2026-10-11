@@ -2,6 +2,8 @@
 # Rebuild the shipped libSDL2-2.0.so.0 from the corresponding source
 # (sources/SDL2.tar.xz -> SDL2-2.32.10/). Same recipe as packaging/build-sdl2.sh.
 #   bash build-sdl.sh <unpacked SDL2-2.32.10 dir> <output prefix>
+# Needs the development packages libpulse-dev, libpipewire-0.3-dev (with libspa-0.2-dev),
+# libasound2-dev and libjack-jackd2-dev: without them SDL would silently leave a backend out.
 # Result: <output prefix>/lib/libSDL2-2.0.so.0 (stripped, no machine paths).
 set -euo pipefail
 src="$(cd "${1:?usage: build-sdl.sh <SDL2-2.32.10 dir> <output prefix>}" && pwd)"
@@ -16,7 +18,9 @@ command -v ninja >/dev/null 2>&1 && gen=(Ninja)
 cmake -S "$src" -B "$work/build" -G "${gen[*]}" -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX="$prefix" \
   "-DCMAKE_C_FLAGS=-ffile-prefix-map=$work=. -ffile-prefix-map=$src=SDL2-2.32.10 -ffile-prefix-map=$work/build=build" \
-  -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF
+  -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF \
+  -DSDL_PULSEAUDIO=ON -DSDL_PULSEAUDIO_SHARED=ON -DSDL_PIPEWIRE=ON -DSDL_PIPEWIRE_SHARED=ON \
+  -DSDL_ALSA=ON -DSDL_ALSA_SHARED=ON -DSDL_JACK=ON -DSDL_JACK_SHARED=ON
 cmake --build "$work/build" -j"${JOBS:-4}"
 cmake --install "$work/build" --strip
 sha256sum "$prefix/lib/libSDL2-2.0.so.0"

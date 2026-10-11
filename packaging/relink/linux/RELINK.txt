@@ -51,7 +51,7 @@ per-file compile flags are in sources/relink-materials.tar.xz:
 Expected result:
 
     lib/libSDL2-2.0.so.0
-    SHA-256 19636a84c70c7488f5400e99d93cbf8c5821b36d363c4328ea9d74a3c3903cab
+    SHA-256 3d5c61bad2a0484484ac2219ae109e4e96ae225505c59c42a33958657d4f838f
 
 Modification and reverse engineering of the shipped components for debugging
 is permitted by the applicable licenses; no additional restriction is added

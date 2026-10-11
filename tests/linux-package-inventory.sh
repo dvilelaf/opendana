@@ -4,7 +4,8 @@
 # Positive control: the unpacked TAR passes (inventory, notices, bundle sums,
 # ELF/SDL resolution, --version and SOURCES.json of COMMIT). Negative controls,
 # each on a fresh copy: a missing notice, an extra file, a tampered source
-# archive (bundle SHA256SUMS) and the wrong expected commit must all fail.
+# archive (bundle SHA256SUMS) and the wrong expected commit must all fail. The bundled
+# SDL2 must also offer the PulseAudio, PipeWire and ALSA drivers (C6.93).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 tarball="$(realpath "${1:?usage: linux-package-inventory.sh PACKAGE.tar.gz COMMIT}")"
@@ -16,6 +17,7 @@ tar -xzf "$tarball" -C "$work/good"
 top="$(ls "$work/good")"
 lb="share/doc/opendana/license-bundle"
 python3 tests/linux-package-check.py "$work/good/$top" --commit "$commit"
+python3 -I tests/linux-package-sdl-audio.py "$work/good/$top"
 reject() { # label dir [commit]
     if python3 tests/linux-package-check.py "$2/$top" --commit "${3:-$commit}" > "$work/log" 2>&1; then
         cat "$work/log"; echo "error: control '$1' was accepted" >&2; exit 1

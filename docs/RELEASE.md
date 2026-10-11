@@ -44,7 +44,13 @@ Two builds give the same SHA-256 (the one in `packaging/pins.sh`). The package
 binaries (`opendana`, `opendana.exe`, the SDL libraries) are installed stripped.
 
 Host tools: `git`, `cmake`, a C compiler, `tar`, `gzip`, `xz`, `python3`,
-`readelf`, `strip`, `ninja` (or `make`). For Windows, MinGW-w64 (`x86_64-w64-mingw32-gcc` from the Debian or
+`readelf`, `strip`, `pkg-config`, `ninja` (or `make`). The Linux SDL2 is built with the
+PulseAudio, PipeWire, ALSA and JACK audio drivers (all loaded at run time), so it needs their
+development packages: on Debian or Ubuntu `libpulse-dev`, `libpipewire-0.3-dev`
+(which pulls `libspa-0.2-dev`), `libasound2-dev` and `libjack-jackd2-dev` (or any package providing `libjack-dev`). `packaging/build-sdl2.sh --target linux`
+stops with the name of the missing package instead of building a library without a driver, and
+checks afterwards that the library offers `pulseaudio`, `pipewire` and `alsa` and does not link
+`libpulse` or `libpipewire` at load time. For Windows, MinGW-w64 (`x86_64-w64-mingw32-gcc` from the Debian or
 Ubuntu packages named in `packaging/notices/windows/mingw-w64-runtime.txt`; the
 script requires those versions because the notice was reviewed for them) and,
 optionally, `wine64`. For the AppImage, `mksquashfs` and, if the runtime has to be
@@ -98,6 +104,8 @@ the package, the complete corresponding source (`sources/`), `RELINK.txt`,
 bash tests/linux-package-unit.sh                 # no inputs needed
 bash tests/linux-package-sources.sh
 bash tests/linux-package-inventory.sh build/dist/opendana-X.Y.Z-Linux-x86_64.tar.gz <commit>
+# audio drivers of the bundled SDL2 (also run by build-linux.sh on the staged package):
+python3 -I tests/linux-package-sdl-audio.py <unpacked package>
 bash tests/windows-package-controls.sh           # needs MINGW_SDL2_DIR
 bash tests/package-leaks.sh <tar.gz> <zip> [AppImage]   # paths, user/host, e-mails, names, PE time stamps
 ( cd build/dist && sha256sum -c SHA256SUMS )

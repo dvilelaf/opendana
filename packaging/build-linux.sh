@@ -116,6 +116,7 @@ tar_name="opendana-${OD_VERSION}-Linux-x86_64"
 stage="$work/stage/$tar_name"
 cmake --install "$work/build" --prefix "$stage" --component Runtime --strip
 od_check_pin "$stage/lib/libSDL2-2.0.so.0" "$OD_PIN_LINUX_SDL2_SHA256" "staged SDL2"
+python3 -I "$OD_ROOT/tests/linux-package-sdl-audio.py" "$stage" || od_die "the staged SDL2 lacks the sound-server audio drivers"
 [ "$(LC_ALL=C readelf -d "$stage/bin/opendana" | sed -n 's/.*Library runpath: \[\(.*\)\]/\1/p')" = '$ORIGIN/../lib' ] \
     || od_die "bin/opendana RUNPATH is not \$ORIGIN/../lib"
 version_out="$(env -i HOME="$work" PATH=/usr/bin:/bin "$stage/bin/opendana" --version)"
@@ -164,6 +165,7 @@ if [ "$mode" = appimage ]; then
     appdir="$work/AppDir"
     mkdir -p "$appdir/usr"
     cp -a "$stage/." "$appdir/usr/"
+    python3 -I "$OD_ROOT/tests/linux-package-sdl-audio.py" "$appdir/usr" || od_die "the AppDir SDL2 lacks the sound-server audio drivers"
     rm -rf "$appdir/usr/share/doc/opendana/license-bundle"
     bash "$OD_ROOT/packaging/license-bundle.sh" --manifest "$work/materials-appimage/manifest.json" \
         --sha256 "$manifest_sha_app" --mode appimage --artifact "application=$stage/bin/opendana" \

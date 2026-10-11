@@ -30,7 +30,7 @@ Expected result
 The shipped shared library (built with GCC Ubuntu 11.4.0-1ubuntu1~22.04.3):
 
     lib/libSDL2-2.0.so.0
-    SHA-256 19636a84c70c7488f5400e99d93cbf8c5821b36d363c4328ea9d74a3c3903cab
+    SHA-256 3d5c61bad2a0484484ac2219ae109e4e96ae225505c59c42a33958657d4f838f
     SONAME  libSDL2-2.0.so.0
     version 2.32.10 (SDL_MAJOR/MINOR/PATCHLEVEL = 2/32/10)
 

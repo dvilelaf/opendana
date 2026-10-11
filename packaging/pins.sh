@@ -13,8 +13,12 @@ OD_PIN_SDL_EPOCH=1756762407
 
 # Linux: libSDL2-2.0.so.0 (stripped) built from that tree by packaging/build-sdl2.sh
 # --target linux (GCC Ubuntu 11.4.0; recipe in packaging/relink/linux/). The
-# SDL2-embedded notice and RELINK describe this file.
-OD_PIN_LINUX_SDL2_SHA256=19636a84c70c7488f5400e99d93cbf8c5821b36d363c4328ea9d74a3c3903cab
+# SDL2-embedded notice and RELINK describe this file. Audio drivers of the pinned file
+# (C6.93): pulseaudio, alsa, jack, pipewire, dsp, disk, dummy; pulseaudio, pipewire, alsa
+# and jack are loaded at run time (no libpulse/libpipewire in DT_NEEDED). Built against
+# libpulse-dev 15.99.1, libpipewire-0.3-dev and libspa-0.2-dev 0.3.48, libasound2-dev
+# 1.2.6.1 and libjack-jackd2-dev 1.9.20; two clean builds gave the same bytes.
+OD_PIN_LINUX_SDL2_SHA256=3d5c61bad2a0484484ac2219ae109e4e96ae225505c59c42a33958657d4f838f
 
 # Windows: SDL2.dll (stripped, no PE time stamp) built from the same tree by
 # packaging/build-sdl2.sh --target windows

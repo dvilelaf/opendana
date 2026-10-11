@@ -69,6 +69,17 @@ if [ "$target" = windows ]; then
 fi
 generator=("Unix Makefiles")
 if [ "$target" = linux ]; then command -v ninja >/dev/null 2>&1 && generator=(Ninja); fi
+if [ "$target" = linux ]; then
+    # SDL's CMake silently leaves out an audio backend whose development files are not on
+    # the build machine. The package must offer all of them, so stop here instead.
+    od_require_tools pkg-config
+    for dev in "libpulse >= 0.9.15|libpulse-dev" "libpipewire-0.3 >= 0.3.20|libpipewire-0.3-dev" \
+               "alsa|libasound2-dev" "jack|libjack-jackd2-dev"; do
+        pkg-config --exists "${dev%%|*}" \
+            || od_die "pkg-config cannot find ${dev%%|*}: install the development package ${dev##*|} (the SDL2 of the package needs the PulseAudio, PipeWire, ALSA and JACK audio backends)"
+    done
+    echo "audio development files: libpulse $(pkg-config --modversion libpulse), libpipewire-0.3 $(pkg-config --modversion libpipewire-0.3), alsa $(pkg-config --modversion alsa), jack $(pkg-config --modversion jack)"
+fi
 
 mkdir -p "$OD_BUILD_DIR"
 work="$(mktemp -d "$OD_BUILD_DIR/sdl2-build.XXXXXX")"
@@ -99,7 +110,11 @@ common=(-S "$srcdir" -B "$builddir" -G "${generator[*]}" -DCMAKE_BUILD_TYPE=Rele
         -DCMAKE_INSTALL_PREFIX="$out" "-DCMAKE_C_FLAGS=$map"
         -DSDL_SHARED=ON -DSDL_TEST=OFF)
 if [ "$target" = linux ]; then
-    cmake "${common[@]}" -DSDL_STATIC=OFF
+    # Audio backends, requested explicitly and all loaded at run time (dlopen): the library
+    # has no fixed dependency on libpulse, libpipewire, libasound or libjack.
+    cmake "${common[@]}" -DSDL_STATIC=OFF \
+        -DSDL_PULSEAUDIO=ON -DSDL_PULSEAUDIO_SHARED=ON -DSDL_PIPEWIRE=ON -DSDL_PIPEWIRE_SHARED=ON \
+        -DSDL_ALSA=ON -DSDL_ALSA_SHARED=ON -DSDL_JACK=ON -DSDL_JACK_SHARED=ON
 elif [ "$target" = macos ]; then
     # Universal in one pass, the deployment target of the app, no static library, and a
     # fixed install name: the app finds the dylib through @rpath (Contents/Frameworks).
@@ -127,6 +142,31 @@ if [ "$target" = macos ]; then
     codesign --remove-signature "$stage/$lib_rel" 2>/dev/null || true
     lipo -info "$stage/$lib_rel" | grep -q 'x86_64 arm64' || od_die "libSDL2 is not universal x86_64+arm64"
     otool -D "$stage/$lib_rel" | tail -1 | grep -qx '@rpath/libSDL2-2.0.0.dylib' || od_die "unexpected install name: $(otool -D "$stage/$lib_rel" | tail -1)"
+fi
+if [ "$target" = linux ]; then
+    step "audio backends of the library"
+    od_require_tools cc readelf
+    probe="$work/audio-probe"
+    mkdir -p "$probe"
+    cat > "$probe/probe.c" <<'EOF'
+#include <SDL.h>
+#include <stdio.h>
+int main(void) {
+    for (int i = 0; i < SDL_GetNumAudioDrivers(); i++) puts(SDL_GetAudioDriver(i));
+    return 0;
+}
+EOF
+    cc -o "$probe/probe" "$probe/probe.c" -I"$stage/include/SDL2" "$stage/$lib_rel" -Wl,-rpath,"$(dirname "$stage/$lib_rel")" \
+        || od_die "cannot compile the audio-driver probe against the built SDL2"
+    drivers="$("$probe/probe")"
+    echo "audio drivers: $(echo $drivers)"
+    for driver in pulseaudio pipewire alsa; do
+        grep -qx "$driver" <<<"$drivers" || od_die "the built $lib_rel does not offer the $driver audio driver"
+    done
+    needed="$(LC_ALL=C readelf -d "$stage/$lib_rel" | sed -n 's/.*(NEEDED).*\[\(.*\)\]/\1/p')"
+    if grep -Eq '^lib(pulse|pipewire)' <<<"$needed"; then
+        od_die "the built $lib_rel links libpulse or libpipewire at load time (DT_NEEDED: $(echo $needed)); they must be loaded at run time"
+    fi
 fi
 actual="$(od_sha256 "$stage/$lib_rel")"
 echo "$lib_rel sha256 $actual"

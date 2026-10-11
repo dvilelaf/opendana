@@ -3205,12 +3205,29 @@ static void async_install(void)
     atexit(async_shutdown);
 }
 
+/* C6.93: the name SDL gives to the window system and, above all, to the sound server, so
+ * the mixer lists the program as OpenDana (not as the ALSA plug-in or the binary). The
+ * hints only exist in newer headers and only name things: they do not touch the simulation. */
+static void set_sdl_app_names(void)
+{
+#ifdef SDL_HINT_APP_NAME
+    SDL_SetHint(SDL_HINT_APP_NAME, "OpenDana");
+#endif
+#ifdef SDL_HINT_AUDIO_DEVICE_APP_NAME
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_APP_NAME, "OpenDana");
+#endif
+#ifdef SDL_HINT_AUDIO_DEVICE_STREAM_NAME
+    SDL_SetHint(SDL_HINT_AUDIO_DEVICE_STREAM_NAME, "OpenDana");
+#endif
+}
+
 int main(int argc, char **argv)
 {
     options o;
     int rc = parse_args(&o, argc, argv);
     if (rc)
         return rc;
+    set_sdl_app_names();
 
     if (!o.headless && !o.replay && !o.show_save) {
         char path[1024];
