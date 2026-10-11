@@ -90,6 +90,14 @@ static int in_bounds(int x, int y)
     return x >= 0 && x < OD_GRID_W && y >= 0 && y < OD_GRID_H;
 }
 
+/* The row `n` rows above `y`. The board is a ring of 15 rows: the row above
+ * the top one is the bottom one, which is what lets Hero climb into the row an
+ * auto-scrolling round uncovers at the top. */
+static int row_above(int y, int n)
+{
+    return (y + OD_GRID_H - n) % OD_GRID_H;
+}
+
 int od_game_cell(const od_game *g, int x, int y)
 {
     if (!in_bounds(x, y))
@@ -1356,14 +1364,13 @@ static int hero_sgn8(unsigned v) { return (v & 0x80) ? (int)v - 0x100 : (int)v; 
  * is not empty OR a live flame slot stands in that very cell. */
 static unsigned hero_set_above(const od_game *g)
 {
-    if (od_game_cell(g, g->hero_x, g->hero_y - 1))
+    int up = row_above(g->hero_y, 1);
+    if (od_game_cell(g, g->hero_x, up))
         return 5;
-    if (g->hero_y > 0) {
-        unsigned above = cell_index(g->hero_x, g->hero_y - 1);
-        for (int i = g->flame_count - 1; i >= 0; i--)
-            if (g->flames[i].type && g->flames[i].cell == above)
-                return 5;
-    }
+    unsigned above = cell_index(g->hero_x, up);
+    for (int i = g->flame_count - 1; i >= 0; i--)
+        if (g->flames[i].type && g->flames[i].cell == above)
+            return 5;
     return 4;
 }
 
@@ -1733,6 +1740,15 @@ static void hero_magic(od_game *g)
     hero_start(g, action, g->hero_x, g->hero_y);
 }
 
+/* Hero cannot climb while his drawn row, as the previous tick left it, is in
+ * the top 24 pixels of the screen: the decision tests the screen, not the
+ * grid row, so in a scrolling round the top grid row is climbable once the
+ * scroll has moved it down. */
+static int hero_near_top(const od_game *g)
+{
+    return g->hero_py < 0x18;
+}
+
 /* New decisions are suppressed while any of three freeze conditions holds: a
  * fire-extinction effect is queued, a tile write is pending (the moving ice
  * block) or a support/candidate span is queued (cascade). The frame clock and
@@ -1813,6 +1829,7 @@ static void hero_decide(od_game *g, unsigned buttons)
         hero_start(g, 0, x, y);
         return;
     }
+    int up1 = row_above(y, 1), up2 = row_above(y, 2);
     int dir = horizontal == OD_BTN_RIGHT ? 1 : -1;
     if (dir != g->facing) { hero_start(g, 0x27, x, y); return; }
     int tx = x + dir;
@@ -1835,14 +1852,14 @@ static void hero_decide(od_game *g, unsigned buttons)
         unsigned a = g->hero_action ? 2 : 1;
         if (!floor) {
             int danger = od_game_cell(g, tx, (y + 2) % 15) >= 15;
-            a = od_game_cell(g, tx, y - 1) ? (danger ? 0x21 : 0x20) : (danger ? 0x1e : 4);
+            a = od_game_cell(g, tx, up1) ? (danger ? 0x21 : 0x20) : (danger ? 0x1e : 4);
             hero_start(g, a, tx, (y + 1) % 15);
         } else if (floor == 14) {
-            hero_start(g, od_game_cell(g, tx, y - 1) ? 0x21 : 0x1e, tx, (y + 1) % 15);
+            hero_start(g, od_game_cell(g, tx, up1) ? 0x21 : 0x1e, tx, (y + 1) % 15);
         } else if (floor >= 15) {
             hero_start(g, 0x19, tx, y);
         } else {
-            if (!!od_game_cell(g, x, y - 1) != !!od_game_cell(g, tx, y - 1)) a = 0x16;
+            if (!!od_game_cell(g, x, up1) != !!od_game_cell(g, tx, up1)) a = 0x16;
             hero_start(g, a, tx, y);
         }
         return;
@@ -1881,20 +1898,20 @@ static void hero_decide(od_game *g, unsigned buttons)
      * connector, the climb hands over to the pipe network instead of stepping
      * up. The base sequence is the taller one when the cell two rows above
      * Hero is occupied, else the shorter one; a rejected climb adds one. */
-    if (ascend && y > 0 && !od_game_cell(g, x, y - 1)) {
-        int diag = od_game_cell(g, tx, y - 1);
+    if (ascend && !hero_near_top(g) && !od_game_cell(g, x, up1)) {
+        int diag = od_game_cell(g, tx, up1);
         int diag_pipe = dir > 0 ? (diag == 7 || diag == 9 || diag == 11)
                                 : (diag == 7 || diag == 8 || diag == 10);
         if (diag_pipe) {
-            unsigned base = od_game_cell(g, x, y - 2) ? 0x24 : 0x11;
-            pipe_entry(g, tx, y - 1, diag, dir > 0 ? 0u : 1u, base);
+            unsigned base = od_game_cell(g, x, up2) ? 0x24 : 0x11;
+            pipe_entry(g, tx, up1, diag, dir > 0 ? 0u : 1u, base);
             return;
         }
         if (!diag) {
-            unsigned a = od_game_cell(g, tx, y - 2) ?
-                (od_game_cell(g, x, y - 2) ? 0x26 : 0x17) :
-                (od_game_cell(g, x, y - 2) ? 0x23 : 3);
-            hero_start(g, a, tx, y - 1);
+            unsigned a = od_game_cell(g, tx, up2) ?
+                (od_game_cell(g, x, up2) ? 0x26 : 0x17) :
+                (od_game_cell(g, x, up2) ? 0x23 : 3);
+            hero_start(g, a, tx, up1);
             return;
         }
     }
