@@ -1002,11 +1002,14 @@ static void present_game(od_presentation *p, const od_game *g,
          * top row). */
         unsigned a = scrolled_object_y((unsigned)g->ice_py, g->scroll_y);
         int origin_y = a ? (int)a - 1 : 0xEF;
+        /* A lone stone in flight is mirrored into the ice fields, but its four tiles
+         * follow the ice's in the bank. */
+        unsigned kind = (!g->pending && g->stone.active) ? 4 : 0;
         for (unsigned k = 0; k < 4; k++) {
             od_sprite *s = &p->sprites[p->sprite_count++];
             *s = (od_sprite){(uint8_t)(g->ice_px - 8 + (int)(k % 2) * 8),
                              (uint8_t)(origin_y - 8 + (int)(k / 2) * 8) + 1,
-                             (uint16_t)(base + 0x50 + k), 0};
+                             (uint16_t)(base + 0x50 + kind + k), 0};
         }
     }
     if (emit_flames)

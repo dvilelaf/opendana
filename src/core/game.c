@@ -1203,6 +1203,18 @@ static int flame_contact(od_game *g, od_block *b, int falling)
     return 0;
 }
 
+/* Whether a sliding block comes to rest on the cell it just reached, given
+ * the cell under it (never empty here) and the cell ahead. Ice keeps going
+ * until the way ahead is blocked. A stone only keeps sliding along an ice
+ * floor (types 2..5) with a free way ahead; on any other floor it moves one
+ * cell and rests, which is why a stone pushed towards a fire stops beside it. */
+static int block_slide_ends(const od_block *b, int below, int ahead)
+{
+    if (b->material == 0x0C && !(below >= 2 && below < 6))
+        return 1;
+    return !passable(ahead);
+}
+
 static void block_step(od_game *g, od_block *b)
 {
     if (!b->active) return;
@@ -1231,9 +1243,10 @@ static void block_step(od_game *g, od_block *b)
     unsigned material = (unsigned)b->material;
     if (cell_at(g, p) == 14) {
         quench(g, p);
-        /* Ice falling onto a fire is consumed (no cell write). A stone
-         * quenches and keeps falling into the support. */
-        if (!falling || !stone) {
+        /* Ice meeting a fire, sliding or falling, is consumed (no cell
+         * write). A stone puts the fire out and goes on with the rest of
+         * this step: it lands or falls on, and stays a stone. */
+        if (!stone) {
             if (!falling) support_changed(g, p, 1);
             b->state = 4;
             b->wait = 2;
@@ -1270,8 +1283,8 @@ static void block_step(od_game *g, od_block *b)
             b->wait = 4;
             emit_sound(g, 0x58); /* the pushed block falls */
         }
-    } else if (falling || !passable(od_game_cell(g, b->px / 16 + b->dx,
-                                                b->py / 16))) {
+    } else if (falling || block_slide_ends(b, below, od_game_cell(g, b->px / 16 + b->dx,
+                                                                 b->py / 16))) {
         put_cell(g, p, material); /* the block lands as its own material */
         b->state = 4;
         b->wait = 2;
