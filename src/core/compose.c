@@ -1196,6 +1196,21 @@ int od_visual_tick(od_visual_state *v, const od_game *before,
                 added++;
             }
         }
+        /* A stone that put a fire out and slid on (an ice floor under it, the way ahead
+         * free) is not consumed: its cell is the fire it just crossed. */
+        if (after->stone.active) {
+            unsigned cell = (unsigned)(after->stone.py / 16 * 16 + after->stone.px / 16);
+            int queued = 0;
+            for (unsigned i = 0; i < next.queued; i++)
+                if (next.queue[i] == cell) queued = 1;
+            if (!queued && cell < 240 && before->cells[cell / 16][cell % 16] == 14 &&
+                after->cells[cell / 16][cell % 16] != 14 && next.queued < 16) {
+                next.qimg[next.queued].type = OD_CELL_FIRE;
+                next.qimg[next.queued].pal = 0xFF;
+                next.queue[next.queued++] = (uint8_t)cell;
+                added++;
+            }
+        }
         if (after->cascade_state == 0x83 && !(after->cascade_width & 128)) {
             /* Each put-out column is queued right to left, so the drain (last in, first
              * out) steams the leftmost first (reference 1-6 f5421: every 4 frames). */
@@ -1501,6 +1516,11 @@ static void restore_pending_fire(od_presentation *p, const od_game *g,
     for (unsigned i = 0; i < v->queued; i++) {
         if (v->qimg[i].pal == OD_QIMG_NONE) continue;
         if (v->qimg[i].pal == 0xFF) {
+            /* A stone that landed on the put-out fire has already written its own tile
+             * there: its landing write comes after the fire is cleared. */
+            if (v->queue[i] < OD_GRID_W * OD_GRID_H &&
+                g->cells[v->queue[i] / OD_GRID_W][v->queue[i] % OD_GRID_W] == 0x0c)
+                continue;
             draw_bg_cell(p, g, v->queue[i], OD_CELL_FIRE, v->ticks);
             continue;
         }
