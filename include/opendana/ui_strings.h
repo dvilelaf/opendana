@@ -92,6 +92,8 @@ typedef enum {
     OD_STR_CONTROLS_HINT_ONCE,
     /* C6.43: why a state was refused. */
     OD_STR_STATE_BAD_FORMAT, OD_STR_STATE_BAD_CONTENT, OD_STR_SAVE_OLDER,
+    /* C6.98: the state messages name their slot. */
+    OD_STR_STATE_SLOT_REASON, OD_STR_STATE_SAVE_FAILED,
     /* C6.46: opt-in applications-menu launcher. */
     OD_STR_DESKTOP_MENU, OD_STR_DESKTOP_ADDED, OD_STR_DESKTOP_NOT_ADDED,
     OD_STR_DESKTOP_QUESTION, OD_STR_DESKTOP_DETAIL, OD_STR_DESKTOP_TOAST_ADDED,

@@ -80,7 +80,7 @@ typedef struct od_ui {
     int save_settings;           /* some value changed; persist settings.ini*/
     int apply_video;             /* fullscreen changed; host reapplies it   */
 
-    char toast[64];
+    char toast[128];
     unsigned toast_ms;
 
     /* States screen (C5.3): the slot list is peeked from disk when the screen
@@ -94,7 +94,7 @@ typedef struct od_ui {
         slot_thumbnails[OD_SETTINGS_STATES_MAX];
     int state_action;            /* OD_UI_STATE_* requested                */
     int state_slot;              /* slot of the requested action            */
-    char state_status[64];       /* last operation result, shown in the UI  */
+    char state_status[128];       /* last operation result, shown in the UI  */
     /* C6.32: the list scrolls (up to OD_SETTINGS_STATES_MAX slots), the
      * keyboard or a pad can reach the buttons (-1 = the list), and deleting
      * or overwriting a slot waits for a confirmation (OD_UI_CONFIRM_*). */

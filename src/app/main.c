@@ -1592,6 +1592,22 @@ static od_status host_state_read(sdl_host *h, const char *path)
     return od_state_load_ex(h->flow,path,&ctx);
 }
 
+/* C6.98: every state message names its slot, 1-based like the slot-change toast
+ * and the slot-N.odstate file. */
+static void state_status_slot(sdl_host *h, int slot, od_string id, unsigned ms)
+{
+    char msg[128];
+    snprintf(msg, sizeof msg, od_str(id), slot + 1);
+    od_ui_states_status(&h->ui, msg, ms);
+}
+
+static void state_status_slot_reason(sdl_host *h, int slot, od_string id, unsigned ms)
+{
+    char msg[128];
+    snprintf(msg, sizeof msg, od_str(OD_STR_STATE_SLOT_REASON), slot + 1, od_str(id));
+    od_ui_states_status(&h->ui, msg, ms);
+}
+
 static void host_state_save_slot(sdl_host *h, int slot)
 {
     if (h->flow == NULL)
@@ -1605,11 +1621,11 @@ static void host_state_save_slot(sdl_host *h, int slot)
     od_state_default_path(path, sizeof path, slot + 1);
     if (ensure_parent_dir(path) != 0 || host_state_write(h, path) != OD_OK) {
         fprintf(stderr, "state: cannot save %s\n", path);
-        od_ui_states_status(&h->ui, od_str(OD_STR_STATE_ERROR), 1600);
+        state_status_slot_reason(h, slot, OD_STR_STATE_SAVE_FAILED, 1600);
         return;
     }
     fprintf(stderr, "state: saved %s (tick %ld)\n", path, h->flow->sim_tick);
-    od_ui_states_status(&h->ui, od_str(OD_STR_STATE_SAVED), 1400);
+    state_status_slot(h, slot, OD_STR_STATE_SAVED, 1400);
     char thumb[1300];
     state_thumb_path(path, thumb, sizeof thumb);
     od_userdir_remove(thumb);   /* never write through a link left at slot-N.png */
@@ -1638,12 +1654,12 @@ static void host_state_load_slot(sdl_host *h, int slot)
     if (host_state_read(h, path) != OD_OK) {
         fprintf(stderr, "state: rejected %s\n", path);
         od_state_reject why = od_state_last_reject();
-        od_ui_states_status(&h->ui, od_str(why == OD_STATE_REJECT_CONTENT ? OD_STR_STATE_BAD_CONTENT :
-            why == OD_STATE_REJECT_FORMAT ? OD_STR_STATE_BAD_FORMAT : OD_STR_STATE_ERROR), 3200);
+        state_status_slot_reason(h, slot, why == OD_STATE_REJECT_CONTENT ? OD_STR_STATE_BAD_CONTENT :
+            why == OD_STATE_REJECT_FORMAT ? OD_STR_STATE_BAD_FORMAT : OD_STR_STATE_ERROR, 3200);
         return;
     }
     fprintf(stderr, "state: loaded %s (tick %ld)\n", path, h->flow->sim_tick);
-    od_ui_states_status(&h->ui, od_str(OD_STR_STATE_LOADED), 1400);
+    state_status_slot(h, slot, OD_STR_STATE_LOADED, 1400);
     if (h->ui.screen == OD_UI_STATES)
         od_ui_states_refresh(&h->ui, slot);
 }
@@ -1655,7 +1671,7 @@ static void host_state_delete_slot(sdl_host *h, int slot)
     state_thumb_path(path, thumb, sizeof thumb);
     od_userdir_remove(path);
     od_userdir_remove(thumb);
-    od_ui_states_status(&h->ui, od_str(OD_STR_STATE_REMOVED), 1200);
+    state_status_slot(h, slot, OD_STR_STATE_REMOVED, 1200);
     if (h->ui.screen == OD_UI_STATES)
         od_ui_states_refresh(&h->ui, slot);
 }

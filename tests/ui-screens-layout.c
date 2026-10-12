@@ -262,7 +262,7 @@ static void test_states(void)
     od_ui_handle_key(&ui, OD_UI_KEY_ACCEPT);
     EXPECT(ui.screen == OD_UI_STATES, "the menu opens the states screen");
     snprintf(ui.state_status, sizeof ui.state_status, "%s",
-             "State rejected: content identity is not verified here");
+             "Slot 16: Saved with different imported content");
     for (int slot = 0; slot < 16; slot++) {
         ui.slot_focus = 0;
         for (int k = 0; k < slot; k++)
@@ -313,6 +313,10 @@ static void test_toasts(void)
         "Save/load unavailable: content identity is not verified",
         "This state is from an incompatible game version.",
         "This state was saved with different imported content.",
+        /* C6.98: the state messages name their slot (two digits, longest forms). */
+        "State saved to slot 16", "State loaded from slot 16", "State removed from slot 16",
+        "Slot 16: Saved by an older OpenDana version",
+        "Slot 16: Saved with different imported content", "Slot 16: Could not save the state",
         "A toast long enough to need two lines on the 256 pixel overlay x",
 #if defined(OD_UI_REVISION) && OD_UI_REVISION >= 646
         "Added to the applications menu", "Removed from the applications menu",
