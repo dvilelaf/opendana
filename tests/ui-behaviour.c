@@ -84,6 +84,7 @@ static int cases, failed_cases, checks, failures, case_failed, skipped;
 #define CASE(name, fn)                                                        \
     do {                                                                      \
         case_failed = 0;                                                      \
+        isolate_data_home();                                                  \
         fn();                                                                 \
         cases++;                                                              \
         failed_cases += case_failed;                                          \
@@ -91,6 +92,8 @@ static int cases, failed_cases, checks, failures, case_failed, skipped;
     } while (0)
 
 static char tmp[600];
+static void isolate_data_home(void);
+static void mkdirs(const char *path);
 
 /* The per-user data home the states screen reads: $XDG_DATA_HOME on POSIX,
  * %LOCALAPPDATA% on Windows (src/core/userdir.c). */
@@ -107,6 +110,17 @@ static void set_data_home(const char *dir)
 #else
     setenv("XDG_DATA_HOME", dir, 1);
 #endif
+}
+
+/* Every case starts on an empty data home of its own, so none reads (or depends on) the
+ * user's real states, catalogue or settings; a case that needs files makes its own. */
+static void isolate_data_home(void)
+{
+    static int n;
+    char dir[700];
+    snprintf(dir, sizeof dir, "%s/isolated-%d", tmp, ++n);
+    mkdirs(dir);
+    set_data_home(dir);
 }
 
 /* Symbolic link at `link` pointing to `target`; 0 on success, -1 on error, -2
