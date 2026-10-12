@@ -524,6 +524,10 @@ static void bands_set(od_cinematic *s, unsigned a)
     const cJSON *banks=table(s,"bg_bank_sets",chr);
     for(unsigned i=0;i<4;++i) s->split_banks[i]=(uint8_t)num(banks,i);
 }
+/* Name-table address to the two-page tile store. The original's cartridge
+ * mirroring decides which pages $2800-$2FFF fold onto: with the horizontal
+ * arrangement (chr_mode) tables 2 and 3 are page 1, otherwise tables 1 and 3. */
+#define NT_IDX(s,a) ((((a)-0x2000u)&0x3ffu)|((s)->chr_mode?(((a)-0x2000u)>>1)&0x400u:((a)-0x2000u)&0x400u))
 /* paced glyph uploads, dictionary already expanded in content. */
 static void text_step(od_cinematic *s)
 {
@@ -531,7 +535,7 @@ static void text_step(od_cinematic *s)
     if(s->text_wait) { --s->text_wait; return; }
     if(s->text_state) {
         unsigned address=num(field(s->data->root,"text_addresses"),0)+s->text_x;
-        for(unsigned i=0;i<8;++i) s->tiles[(address+32*i-0x2000)&2047]=0;
+        for(unsigned i=0;i<8;++i) s->tiles[NT_IDX(s,address+32*i)]=0;
         ++s->text_x;
         if(((address+1)&255)==0x5d) { s->text_state=0; s->text_region=s->text_x=0; }
         return;
@@ -545,8 +549,8 @@ static void text_step(od_cinematic *s)
         const char *name=op->valuestring; unsigned a=num(args,0);
         unsigned address=num(field(s->data->root,"text_addresses"),s->text_region&3)+s->text_x;
         if(!strcmp(name,"glyph")) {
-            s->tiles[(address-0x2000)&2047]=0;
-            s->tiles[(address+32-0x2000)&2047]=(uint8_t)a;
+            s->tiles[NT_IDX(s,address)]=0;
+            s->tiles[NT_IDX(s,address+32)]=(uint8_t)a;
             ++s->text_x; s->text_wait=s->text_speed; return;
         }
         if(!strcmp(name,"line")) { ++s->text_region; s->text_x=0; return; }
@@ -558,7 +562,7 @@ static void text_step(od_cinematic *s)
         }
         if(!strcmp(name,"upload")) {
             address=(num(args,1)|(num(args,2)<<8))+32;
-            for(unsigned i=0;i<a;++i) s->tiles[(address+i-0x2000)&2047]=(uint8_t)num(args,i+3);
+            for(unsigned i=0;i<a;++i) s->tiles[NT_IDX(s,address+i)]=(uint8_t)num(args,i+3);
             return;
         }
         if(!strcmp(name,"font-next")) { ++s->text_font; return; }
@@ -575,7 +579,7 @@ static void dynamic_step(od_cinematic *s)
         const cJSON *c=at(field(table(s,"scenes",s->scene),"program"),s->vram_command),*w=NULL;
         cJSON_ArrayForEach(w,field(c,"writes")) {
             unsigned p=num(w,0),inc=num(w,1);const cJSON *v=at(w,2);
-            for(unsigned k=0;k<(unsigned)cJSON_GetArraySize(v);++k,p+=inc)s->tiles[(p-0x2000)&2047]=(uint8_t)num(v,k);
+            for(unsigned k=0;k<(unsigned)cJSON_GetArraySize(v);++k,p+=inc)s->tiles[NT_IDX(s,p)]=(uint8_t)num(v,k);
         }
         s->vram_pending=0;
     }
@@ -929,7 +933,7 @@ static od_status commands(od_cinematic *s)
             for(int i=0;i<cJSON_GetArraySize(writes);++i) {
                 const cJSON *wr=at(writes,(unsigned)i), *v=at(wr,2);
                 unsigned p=num(wr,0)&0x3fff, inc=num(wr,1);
-                for(int j=0;j<cJSON_GetArraySize(v);++j,p+=inc) s->tiles[(p-0x2000)&2047]=(uint8_t)num(v,(unsigned)j);
+                for(int j=0;j<cJSON_GetArraySize(v);++j,p+=inc) s->tiles[NT_IDX(s,p)]=(uint8_t)num(v,(unsigned)j);
             }
         } else if(!strcmp(name,"bands")) bands_set(s,a);
         else if(!strcmp(name,"scroll")) {
