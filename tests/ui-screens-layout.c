@@ -306,6 +306,52 @@ static void test_states(void)
     ui.screen = OD_UI_HIDDEN;
 }
 
+/* C6.100: opening a confirmation on the states screen clears the previous
+ * operation's message, the status line and the toast; the answer decides
+ * what appears next. */
+static void test_states_confirm_clears(void)
+{
+    static const struct { int key; int what; const char *name; } cases[] = {
+        { OD_UI_KEY_DELETE, OD_UI_CONFIRM_DELETE, "delete" },
+        { OD_UI_KEY_ACCEPT, OD_UI_CONFIRM_OVERWRITE, "overwrite" },
+    };
+    settings.states_slots = 8;
+    ui.screen = OD_UI_MENU;
+    ui.selected = 1;
+    od_ui_handle_key(&ui, OD_UI_KEY_ACCEPT);
+    for (int c = 0; c < 2; c++) {
+        for (int yes = 0; yes <= 1; yes++) {
+            ui.slot_occupied[2] = 1;
+            ui.slot_focus = 2;
+            ui.states_button = c == 1 ? 0 : -1;   /* "Save here" on an occupied slot */
+            od_ui_states_status(&ui, "State loaded from slot 3", 1400);
+            od_ui_handle_key(&ui, cases[c].key);
+            EXPECT(ui.confirm == cases[c].what, "%s asks first", cases[c].name);
+            EXPECT(ui.state_status[0] == '\0',
+                   "%s question: the status line is empty", cases[c].name);
+            EXPECT(ui.toast_ms == 0, "%s question: the toast is gone", cases[c].name);
+            if (yes) {
+                od_ui_handle_key(&ui, OD_UI_KEY_LEFT);   /* Yes */
+                od_ui_handle_key(&ui, OD_UI_KEY_ACCEPT);
+                EXPECT(ui.state_slot == 2 && ui.state_action ==
+                       (c == 0 ? OD_UI_STATE_DELETE : OD_UI_STATE_SAVE),
+                       "%s answered Yes asks the host", cases[c].name);
+                ui.state_action = OD_UI_STATE_NONE;
+            } else {
+                od_ui_handle_key(&ui, OD_UI_KEY_ACCEPT); /* No (default) */
+                EXPECT(ui.state_action == OD_UI_STATE_NONE,
+                       "%s answered No does nothing", cases[c].name);
+            }
+            EXPECT(ui.confirm == OD_UI_CONFIRM_NONE, "%s: the question closed", cases[c].name);
+            EXPECT(ui.state_status[0] == '\0' && ui.toast_ms == 0,
+                   "%s answered %s: no message is left", cases[c].name,
+                   yes ? "Yes before the host acts" : "No");
+        }
+    }
+    ui.slot_occupied[2] = 0;
+    ui.screen = OD_UI_HIDDEN;
+}
+
 static void test_toasts(void)
 {
     static const char *const toasts[] = {
@@ -419,6 +465,7 @@ int main(void)
     test_menu_settings();
     test_controls();
     test_states();
+    test_states_confirm_clears();
     test_toasts();
     test_first_run();
     test_scales();

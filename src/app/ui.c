@@ -440,21 +440,28 @@ static void states_scroll_to_focus(od_ui *ui)
     if (ui->slot_scroll < 0) ui->slot_scroll = 0;
 }
 
+/* The question replaces the previous operation's message: neither the status
+ * line nor the toast stays under it. */
+static void states_confirm_open(od_ui *ui, int what, int slot)
+{
+    ui->state_status[0] = '\0';
+    ui->toast_ms = 0;
+    ui->confirm = what;
+    ui->confirm_slot = slot;
+    ui->confirm_yes = 0;
+}
+
 /* Ask before deleting or overwriting a slot (C6.32 UI-1/UI-17). */
 static void states_request(od_ui *ui, int action, int slot)
 {
     if (action == OD_UI_STATE_DELETE) {
         if (!ui->slot_occupied[slot])
             return;                         /* nothing to delete */
-        ui->confirm = OD_UI_CONFIRM_DELETE;
-        ui->confirm_slot = slot;
-        ui->confirm_yes = 0;
+        states_confirm_open(ui, OD_UI_CONFIRM_DELETE, slot);
         return;
     }
     if (action == OD_UI_STATE_SAVE && ui->slot_occupied[slot]) {
-        ui->confirm = OD_UI_CONFIRM_OVERWRITE;
-        ui->confirm_slot = slot;
-        ui->confirm_yes = 0;
+        states_confirm_open(ui, OD_UI_CONFIRM_OVERWRITE, slot);
         return;
     }
     ui->state_slot = slot;
