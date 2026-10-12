@@ -2854,7 +2854,11 @@ od_flow_replay_status od_flow_run_replay(od_flow *f)
     if (!o->level_seen && o->ending && o->shot_frame >= 0)
         shot_at = o->shot_frame - OD_ENDING_FIRST;
     if (shot_at < 0) shot_at = 0;
-    if (shot_at > frames - 1) shot_at = frames - 1;
+    /* An explicit --shot-frame past the end is not moved to the last frame: that
+     * would hand back a picture of another frame as if it were the one asked for. */
+    const int shot_explicit = o->shot_frame >= 0;
+    if (shot_at > frames - 1 && !shot_explicit) shot_at = frames - 1;
+    od_flow_replay_status shot_status = OD_FLOW_REPLAY_OK;
 
     flow_audio_setup(f);
 
@@ -2909,9 +2913,16 @@ od_flow_replay_status od_flow_run_replay(od_flow *f)
                 return OD_FLOW_REPLAY_IO;
         }
     }
-    if (o->screenshot && !shot_done && o->shot_every <= 0 && f->host.screenshot)
-        if (f->host.screenshot(f->host.ctx, f, &f->fb, frames - 1, 0))
+    if (o->screenshot && !shot_done && o->shot_every <= 0 && f->host.screenshot) {
+        if (shot_explicit) {
+            long first = (!o->level_seen && o->ending) ? OD_ENDING_FIRST : 0;
+            fprintf(stderr, "screenshot: --shot-frame %d is past the end of the run "
+                    "(last frame available: %ld); nothing written\n",
+                    o->shot_frame, first + frames - 1);
+            shot_status = OD_FLOW_REPLAY_RANGE;
+        } else if (f->host.screenshot(f->host.ctx, f, &f->fb, frames - 1, 0))
             return OD_FLOW_REPLAY_IO;
+    }
 
     flow_render_audio(f);
     if (o->audio_out) {
@@ -2934,5 +2945,5 @@ od_flow_replay_status od_flow_run_replay(od_flow *f)
         printf("screens: tick=%ld scene=%s age=%u\n", f->screens.tick,
                od_screens_name(&f->screens), f->screens.age);
     f->running = 0;
-    return OD_FLOW_REPLAY_OK;
+    return shot_status;
 }
