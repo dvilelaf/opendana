@@ -8,6 +8,7 @@
 #include "opendana/audio_sdl.h"
 #include "opendana/ext/settings.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -70,6 +71,13 @@ void od_audio_sdl_tick(od_audio_sdl *as)
     if (as == NULL) return;
     if (as->dev != 0) SDL_LockAudioDevice(as->dev);
     od_audio_tick(&as->audio);
+    /* C6.101: the engine stops for good once it latches an error (it also
+     * travels in a saved state). Say so, like the state:/focus: lines. */
+    static int logged;
+    if (as->audio.error && !logged)
+        fprintf(stderr, "audio: engine error %d at tick %llu: sound stops until restart\n",
+                (int)as->audio.error, (unsigned long long)as->audio.ticks);
+    logged = as->audio.error != 0;
     if (as->dev != 0) SDL_UnlockAudioDevice(as->dev);
 }
 
