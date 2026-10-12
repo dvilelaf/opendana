@@ -524,9 +524,9 @@ static void bands_set(od_cinematic *s, unsigned a)
     const cJSON *banks=table(s,"bg_bank_sets",chr);
     for(unsigned i=0;i<4;++i) s->split_banks[i]=(uint8_t)num(banks,i);
 }
-/* Name-table address to the two-page tile store. The original's cartridge
- * mirroring decides which pages $2800-$2FFF fold onto: with the horizontal
- * arrangement (chr_mode) tables 2 and 3 are page 1, otherwise tables 1 and 3. */
+/* Name-table address to the two-page tile store. The table arrangement decides
+ * where the upper two tables fold: stacked (chr_mode), tables 2 and 3 are page 1;
+ * side by side, tables 1 and 3. */
 #define NT_IDX(s,a) ((((a)-0x2000u)&0x3ffu)|((s)->chr_mode?(((a)-0x2000u)>>1)&0x400u:((a)-0x2000u)&0x400u))
 /* paced glyph uploads, dictionary already expanded in content. */
 static void text_step(od_cinematic *s)
