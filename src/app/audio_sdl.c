@@ -15,6 +15,7 @@
 static void audio_callback(void *userdata, Uint8 *stream, int len)
 {
     od_audio_sdl *as = (od_audio_sdl *)userdata;
+    as->cb_count++;
     int16_t *out = (int16_t *)stream;
     int frames = len / (int)sizeof(int16_t);
 
@@ -66,6 +67,13 @@ void od_audio_sdl_set_gain(od_audio_sdl *as, int gain_permille)
         SDL_UnlockAudioDevice(as->dev);
 }
 
+void od_audio_sdl_device_event(od_audio_sdl *as, const SDL_Event *ev)
+{
+    if (as && ev && ev->type == SDL_AUDIODEVICEREMOVED && ev->adevice.iscapture == 0 &&
+        as->dev != 0 && ev->adevice.which == (Uint32)as->dev)
+        as->device_removed = 1;
+}
+
 void od_audio_sdl_tick(od_audio_sdl *as)
 {
     if (as == NULL) return;
@@ -103,6 +111,102 @@ od_status od_audio_sdl_request(od_audio_sdl *as, unsigned request)
     return result;
 }
 
+/* Open the default device and start it. The engine is not touched, so this
+ * serves the first open and a later reopen. Returns 0 on success. */
+static int open_device(od_audio_sdl *as)
+{
+    SDL_AudioSpec want, have;
+    memset(&want, 0, sizeof(want));
+    want.freq = OD_AUDIO_RATE;
+    want.format = AUDIO_S16SYS;
+    want.channels = 1;
+    want.samples = 1024;
+    want.callback = audio_callback;
+    want.userdata = as;
+
+    as->dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+    if (as->dev == 0) {
+        /* Retry at a common device rate and resample, so the game is never
+         * silent for want of an exact 48 kHz stream. */
+        want.freq = 44100;
+        as->dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+    }
+    if (as->dev == 0)
+        return -1;
+
+    as->out_rate = have.freq;
+    as->buffer_frames = have.samples;
+    /* The device callback owns no time: it only drains samples the simulation
+     * already produced. The resampler primes itself on its first call. */
+    as->prev = as->next = 0;
+    as->phase = 0.0;
+    as->started = 0;
+    as->device_removed = 0;
+    as->watch_init = 0;
+    SDL_PauseAudioDevice(as->dev, 0);
+    const char *drv = SDL_GetCurrentAudioDriver();
+    fprintf(stderr, "audio: device opened (driver %s, device %s, %d Hz, buffer %d frames)\n",
+            drv ? drv : "?", "default", have.freq, have.samples);
+    return 0;
+}
+
+void od_audio_sdl_watch(od_audio_sdl *as, uint32_t now_ms)
+{
+    if (as == NULL)
+        return;
+    static const char *last_status;
+    if (as->dev != 0) {
+        SDL_AudioStatus st = SDL_GetAudioDeviceStatus(as->dev);
+        const char *txt = st == SDL_AUDIO_PLAYING ? "playing" :
+                          st == SDL_AUDIO_PAUSED ? "paused" : "stopped";
+        if (txt != last_status) {
+            fprintf(stderr, "audio: device status %s\n", txt);
+            last_status = txt;
+        }
+        uint32_t cb = as->cb_count;
+        /* A gap between our own calls means the process was suspended, not
+         * the device: restart the measurement. */
+        if (!as->watch_init || now_ms - as->watch_last_ms > 1000u || cb != as->watch_count) {
+            as->watch_init = 1;
+            as->watch_count = cb;
+            as->watch_moved_ms = now_ms;
+        }
+        as->watch_last_ms = now_ms;
+        const char *why = NULL;
+        if (as->device_removed) why = "removed";
+        else if (st == SDL_AUDIO_STOPPED) why = "stopped";
+        else if (now_ms - as->watch_moved_ms > 2000u) why = "callback stalled";
+        if (why == NULL) {
+            as->lost = 0;
+            return;
+        }
+        /* Close outside the engine: the callback thread is joined here. */
+        SDL_CloseAudioDevice(as->dev);
+        as->dev = 0;
+        last_status = NULL;
+        as->lost = 1;
+        as->retry_ms = now_ms; /* try at once */
+        if (open_device(as) == 0) {
+            fprintf(stderr, "audio: device lost (%s), reopened\n", why);
+            as->lost = 0;
+            as->retry_ms = 0;
+        } else {
+            fprintf(stderr, "audio: device lost (%s), reopen failed: %s\n", why, SDL_GetError());
+            as->retry_ms = now_ms + 3000u;
+        }
+        return;
+    }
+    if (as->lost && (int32_t)(now_ms - as->retry_ms) >= 0) {
+        if (open_device(as) == 0) {
+            fprintf(stderr, "audio: reopened\n");
+            as->lost = 0;
+        } else {
+            fprintf(stderr, "audio: reopen failed: %s\n", SDL_GetError());
+            as->retry_ms = now_ms + 3000u;
+        }
+    }
+}
+
 od_status od_audio_sdl_open(od_audio_sdl *as, const char *assets_dir)
 {
     if (as == NULL)
@@ -120,34 +224,10 @@ od_status od_audio_sdl_open(od_audio_sdl *as, const char *assets_dir)
         return OD_ERR_IO;
     }
 
-    SDL_AudioSpec want, have;
-    memset(&want, 0, sizeof(want));
-    want.freq = OD_AUDIO_RATE;
-    want.format = AUDIO_S16SYS;
-    want.channels = 1;
-    want.samples = 1024;
-    want.callback = audio_callback;
-    want.userdata = as;
-
-    as->dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-    if (as->dev == 0) {
-        /* Retry at a common device rate and resample, so the game is never
-         * silent for want of an exact 48 kHz stream. */
-        want.freq = 44100;
-        as->dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
-    }
-    if (as->dev == 0) {
+    if (open_device(as) != 0) {
         od_audio_shutdown(&as->audio);
         return OD_ERR_IO;
     }
-
-    as->out_rate = have.freq;
-    /* The device callback owns no time: it only drains samples the simulation
-     * already produced. The resampler primes itself on its first call. */
-    as->prev = as->next = 0;
-    as->phase = 0.0;
-    as->started = 0;
-    SDL_PauseAudioDevice(as->dev, 0);
     return OD_OK;
 }
 

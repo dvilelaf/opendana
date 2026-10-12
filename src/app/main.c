@@ -805,10 +805,17 @@ static void host_toggle_fullscreen(sdl_host *h)
 
 static void host_apply_audio(sdl_host *h)
 {
-    if (h->audio_ready)
-        od_audio_sdl_set_gain(&h->audio,
-                               h->paused_focus ? 0
-                                               : od_settings_gain_permille(&h->settings));
+    if (!h->audio_ready)
+        return;
+    int gain = h->paused_focus ? 0 : od_settings_gain_permille(&h->settings);
+    od_audio_sdl_set_gain(&h->audio, gain);
+    /* C6.101: one line per change of the effective gain, with its reason. */
+    static int last_gain = -1;
+    if (gain != last_gain) {
+        fprintf(stderr, "audio: gain %d permille (muted=%d, volume=%d, focus_paused=%d)\n", gain,
+                h->settings.muted ? 1 : 0, h->settings.volume, h->paused_focus ? 1 : 0);
+        last_gain = gain;
+    }
 }
 
 /* ---- save states (C5.3) ------------------------------------------------- */
@@ -972,7 +979,11 @@ static void host_controller_poll(sdl_host *h, int test)
 static void poll_events(sdl_host *h)
 {
     SDL_Event ev;
+    if (h->audio_ready)
+        od_audio_sdl_watch(&h->audio, SDL_GetTicks());
     while (SDL_PollEvent(&ev)) {
+        if (h->audio_ready)
+            od_audio_sdl_device_event(&h->audio, &ev);
         od_pads_handle_event(&h->pads,&ev);
         if (ev.type == SDL_QUIT) {
             h->quit = 1;

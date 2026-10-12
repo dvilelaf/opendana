@@ -26,11 +26,26 @@ typedef struct {
     /* C5.1: gain applied to every sample handed to the device. 1000 = unity,
      * 0 = silence (mute). The simulation and the core PCM never see it. */
     int     gain_permille;
+
+    /* C6.101: device health. The callback bumps cb_count on every call; the
+     * watchdog (od_audio_sdl_watch) compares it against the wall clock. */
+    volatile uint32_t cb_count;
+    uint32_t watch_count, watch_last_ms, watch_moved_ms, retry_ms;
+    int     watch_init, lost, buffer_frames;
+    int     device_removed; /* set by od_audio_sdl_device_event */
 } od_audio_sdl;
 
 /* Load extracted sequence data and open a mono S16 device. */
 od_status od_audio_sdl_open(od_audio_sdl *as, const char *assets_dir);
 void od_audio_sdl_close(od_audio_sdl *as);
+
+/* C6.101: call once per frame from the host loop with a millisecond clock.
+ * Closes and reopens the device (engine untouched) when it was removed,
+ * stopped, or its callback stalled for more than ~2 s; retries every few
+ * seconds and logs each outcome once to stderr. */
+void od_audio_sdl_watch(od_audio_sdl *as, uint32_t now_ms);
+/* Feed SDL_AUDIODEVICEREMOVED events for our device. */
+void od_audio_sdl_device_event(od_audio_sdl *as, const SDL_Event *ev);
 
 /* Pause/resume the device (pause=1 silences output). */
 void od_audio_sdl_pause(od_audio_sdl *as, int pause);
